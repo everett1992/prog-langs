@@ -32,7 +32,6 @@ framework I've used.
 
 6. Does Ruby handle concurrency? Explain why or why not.
 
-
   Some argue that the default ruby implementation (mri) doesn't support parallelism because of the Global Interpreter Lock(GIL).
 Non Ruby parts of the interpreter are not thread safe, so they use locks to prevent data corruption.
 Other Ruby implementations like JRuby, Rubinius, and  MacRuby don't use GIL's and feature true parallelism.
@@ -40,5 +39,3 @@ Ruby does include concurrent and parallel constructs like `Thread`s, and `Fiber`
 like-concurrent performance benefits.
 
 http://merbist.com/2011/02/22/concurrency-in-ruby-explained/
-
-
