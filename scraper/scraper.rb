@@ -1,6 +1,5 @@
 #!/bin/env ruby
 
-require 'active_support/core_ext/numeric/time'
 require 'json'
 require 'open-uri'
 
@@ -11,13 +10,49 @@ class String
   end
 end
 
+class Numeric
+  def seconds
+    self;
+  end
+  alias :second :seconds
+
+  def minutes
+    self.seconds * 60
+  end
+  alias :minute :minutes
+
+  def hours
+    self.minutes * 60
+  end
+  alias :hour :hours
+
+  def days
+    self.hours * 24
+  end
+  alias :day :days
+
+  def weeks
+    self.days * 7
+  end
+  alias :week :weeks
+
+  def months
+    self.weeks * 4
+  end
+  alias :month :months
+
+  def ago
+    Time.now - self
+  end
+end
+
 # Authenticated curl from github.
 def github url
   open url, http_basic_authentication: [ENV['GITHUB_OAUTH_KEY'], '']
 end
 
 class User
-  attr_accessor :login, :name
+  attr_accessor :login
   attr_reader :user_url, :events_url, :following_url, :followers_url
 
   def initialize login
@@ -85,7 +120,7 @@ class Event
   def initialize hash
     @type = hash['type']
     @repo_name = hash['repo']['name']
-    @created_at = DateTime.parse(hash['created_at'])
+    @created_at = Time.parse(hash['created_at'])
   end
 
   def to_s
@@ -96,7 +131,6 @@ end
 
 user = User.new 'everett1992'
 
-puts user.name
+puts user.login
 
-puts '-- peers'
-puts user.events
+puts user.events.select { |event| event.created_at > 1.day.ago }
