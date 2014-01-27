@@ -1,6 +1,6 @@
 #!/bin/env ruby
 
-require 'nokogiri'
+require 'json'
 require 'open-uri'
 
 # Add handy blank method to strings.
@@ -10,34 +10,35 @@ class String
   end
 end
 
+# Authenticated interaction with github.
+def github url
+  open url, http_basic_authentication: [ENV['GITHUB_OAUTH_KEY'], '']
+end
+
 class User
-  attr_accessor :id, :name
+  attr_accessor :login, :name
 
-  def initialize id, name=nil
-    @id, @name = id, name
+  def initialize login
+    @login = login
   end
 
-  # If a user doesn't have a name use the id instead
-  def name
-    @name || @id
+  def user_url
+    "https://api.github.com/users/#{login}"
   end
 
-  # Returns the address of a users following page.
-  def activity_url
-    "https://github.com/#{id}?tab=activity"
+  def events_url
+    "https://api.github.com/users/#{login}/events/public"
   end
 
-  # Returns the address of a users following page.
   def following_url
-    "https://github.com/#{name}/following"
+    "https://api.github.com/users/#{login}/following"
   end
 
-  # Returns the address of a users followers page.
   def followers_url
-    "https://github.com/#{name}/followers"
+    "https://api.github.com/users/#{login}/followers"
   end
 
-  def combined_followees
+  def peers
     following | followers
   end
 
@@ -50,28 +51,27 @@ class User
   end
 
   def to_s
-    "#{name}: #{id}"
+    login
   end
 
   def hash
-    self.id.hash
+    self.login.hash
   end
 
   def eql? other
-    other.id == self.id
+    other.login == self.login
   end
 
   private
 
   def get_users url
-    Nokogiri::HTML(open(url)).css('li.follow-list-item').map do |elem|
-      # Get the account id from the image link.
-      id = elem.css('> a').first[:href][1..-1]
-      # Get the account name from the image alt text (github doesn't use great html markup)
-      name = elem.css('> a > img').first[:alt]
-      name = nil if name.blank?
-
-      User.new id, name
+    begin
+      JSON.parse(github(url).read).map do |user|
+        User.new user['login']
+      end
+    rescue OpenURI::HTTPError => ex
+      puts "Error fetching #{url} : #{ex.message}"
+      puts ex.backtrace
     end
   end
 end
@@ -79,5 +79,7 @@ end
 
 user = User.new 'everett1992'
 
-puts '-- combined'
-puts user.combined_followees
+puts user.name
+
+puts '-- peers'
+puts user.peers
