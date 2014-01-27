@@ -83,8 +83,20 @@ class User
     get_users followers_url
   end
 
+  def days_events
+    events.select { |event| event.created_at > 1.day.ago }
+  end
+
+  def weeks_events
+    events.select { |event| event.created_at > 1.week.ago }
+  end
+
+  def months_events
+    events.select { |event| event.created_at > 1.month.ago }
+  end
+
   def events
-    JSON.parse(github(events_url).read).map { |event| Event.new event }
+    @events ||= JSON.parse(github(events_url).read).map { |event| Event.new event }
   end
 
   def to_s
@@ -128,9 +140,20 @@ class Event
   end
 end
 
+def summarize_events events
+  events.group_by(&:type).each do |type, type_events|
+    type_events.group_by(&:repo_name).each do |repo_name, repo_events|
+      puts "#{repo_events.count} #{type} #{repo_name}"
+    end
+  end
+end
 
-user = User.new 'everett1992'
+
+user = User.new 'goakley'
 
 puts user.login
 
-puts user.events.select { |event| event.created_at > 1.day.ago }
+puts "-- day"
+summarize_events(user.days_events)
+puts "-- week"
+summarize_events(user.weeks_events)
