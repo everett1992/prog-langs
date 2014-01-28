@@ -1,5 +1,6 @@
 #!/bin/env ruby
 
+require 'benchmark'
 require 'json'
 require 'open-uri'
 
@@ -148,12 +149,21 @@ def summarize_events events
   end
 end
 
+def main username
+  user = User.new username
+  peers = user.peers
+  puts user.login
 
-user = User.new 'goakley'
+  puts "Fetching peers activity..."
+  # Events are pulled from the network and cached.
+  peers.map do |peer|
+    Thread.new { peer.events }
+  end.each(&:join)
 
-puts user.login
+  peers.each do |peer|
+    puts "-- #{peer.login}"
+    summarize_events(peer.weeks_events)
+  end
+end
 
-puts "-- day"
-summarize_events(user.days_events)
-puts "-- week"
-summarize_events(user.weeks_events)
+main 'everett1992'
