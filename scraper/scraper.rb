@@ -4,13 +4,14 @@ require 'benchmark'
 require 'json'
 require 'open-uri'
 
-# Add handy blank method to strings.
+# Add handy blank method to Strings.
 class String
   def blank?
     self.nil? || self == ""
   end
 end
 
+# Add time units to Numerics
 class Numeric
   def seconds
     self;
@@ -69,19 +70,19 @@ class User
 
   # The union of following, and followers
   def peers
-    [:following, :followers].map do |m|
+    @peers ||= [:following, :followers].map do |m|
       Thread.new { self.method(m).call }
     end.map(&:value).flatten.uniq
   end
 
   # Array of following Users
   def following
-    get_users following_url
+    @following ||= get_users following_url
   end
 
   # Array of follower Users
   def followers
-    get_users followers_url
+    @followers ||= get_users followers_url
   end
 
   def days_events
@@ -142,28 +143,27 @@ class Event
 end
 
 def summarize_events events
+  report = Array.new
   events.group_by(&:type).each do |type, type_events|
     type_events.group_by(&:repo_name).each do |repo_name, repo_events|
-      puts "#{repo_events.count} #{type} #{repo_name}"
+      report << "#{repo_events.count} #{type} #{repo_name}"
     end
   end
+
+  return report
 end
 
 def main username
   user = User.new username
-  peers = user.peers
   puts user.login
 
   puts "Fetching peers activity..."
-  # Events are pulled from the network and cached.
-  peers.map do |peer|
-    Thread.new { peer.events }
-  end.each(&:join)
 
-  peers.each do |peer|
-    puts "-- #{peer.login}"
-    summarize_events(peer.weeks_events)
-  end
+  output = user.peers.map do |peer|
+    Thread.new { ["-- #{peer.login}", summarize_events(peer.weeks_events)] }
+  end.map { |t| t.join; t.value }
+
+  puts output
 end
 
 main 'everett1992'
