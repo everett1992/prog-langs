@@ -4,44 +4,14 @@ require 'benchmark'
 require 'json'
 require 'open-uri'
 
-# Add handy blank method to Strings.
-class String
-  def blank?
-    self.nil? || self == ""
-  end
-end
-
 # Add time units to Numerics
 class Numeric
-  def seconds
-    self;
-  end
-  alias :second :seconds
-
-  def minutes
-    self.seconds * 60
-  end
-  alias :minute :minutes
-
-  def hours
-    self.minutes * 60
-  end
-  alias :hour :hours
-
-  def days
-    self.hours * 24
-  end
-  alias :day :days
 
   def weeks
-    self.days * 7
+    #      days * hours * minutes * seconds
+    self * 7    * 24    * 60      * 60
   end
   alias :week :weeks
-
-  def months
-    self.weeks * 4
-  end
-  alias :month :months
 
   def ago
     Time.now - self
@@ -85,20 +55,13 @@ class User
     @followers ||= get_users followers_url
   end
 
-  def days_events
-    events.select { |event| event.created_at > 1.day.ago }
-  end
-
   def weeks_events
     events.select { |event| event.created_at > 1.week.ago }
   end
 
-  def months_events
-    events.select { |event| event.created_at > 1.month.ago }
-  end
-
   def events
-    @events ||= JSON.parse(github(events_url).read).map { |event| Event.new event }
+    @events ||= JSON.parse(github(events_url).read)
+      .map { |event| Event.new event }
   end
 
   def to_s
@@ -154,14 +117,13 @@ def summarize_events events
         report << "Watched #{events['WatchEvent'].count} repositories"
       when 'PushEvent'
         events[type].group_by(&:repo_name).each do |name, repo_events|
-          report << "#{repo_events.count} #{repo_events.count == 1 ? "push" : "pushes"} to #{name}"
+          count = repo_events.count
+          pushes = count == 1 ? 'push' : 'pushes'
+          report << "#{count} #{pushes} to #{name}"
         end
       else
         report << "Unknown event '#{type}'"
     end
-    # Count PushEvents to each repository
-    #events['PushEvent'].each do |event|
-    #end
 
     # Count CreateEvents
     #events['CreateEvent'].each do |event|
