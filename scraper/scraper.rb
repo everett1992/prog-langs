@@ -92,12 +92,13 @@ class User
 end
 
 class Event
-  attr_accessor :type, :repo_name, :created_at, :ref_type
+  attr_accessor :type, :repo_name, :created_at, :ref_type, :branch
 
   def initialize hash
     @type = hash['type']
     @repo_name = hash['repo']['name']
     @ref_type = hash['payload']['ref_type']
+    @branch = hash['payload']['master_branch']
     @created_at = Time.parse(hash['created_at'])
   end
 
@@ -120,6 +121,19 @@ def summarize_events events
           count = repo_events.count
           pushes = count == 1 ? 'push' : 'pushes'
           report << "#{count} #{pushes} to #{name}"
+        end
+      when 'CreateEvent'
+        events[type].group_by(&:ref_type).each do |ref_type, type_events|
+          type_events.each do |event|
+            case ref_type
+            when 'repository'
+              puts "Created repository #{event.repo_name}"
+            when 'branch'
+              puts "Created branch #{event.branch} in #{event.repo_name}"
+            else
+              puts "Created #{ref_type}"
+            end
+          end
         end
       else
         report << "Unknown event '#{type}'"
@@ -152,8 +166,6 @@ def main username
       puts summarize_events peer.weeks_events
     end
   end
-
-
 end
 
 main 'everett1992'
