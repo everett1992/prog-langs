@@ -129,11 +129,12 @@ class User
 end
 
 class Event
-  attr_accessor :type, :repo_name, :created_at
+  attr_accessor :type, :repo_name, :created_at, :ref_type
 
   def initialize hash
     @type = hash['type']
     @repo_name = hash['repo']['name']
+    @ref_type = hash['payload']['ref_type']
     @created_at = Time.parse(hash['created_at'])
   end
 
@@ -144,10 +145,27 @@ end
 
 def summarize_events events
   report = Array.new
-  events.group_by(&:type).each do |type, type_events|
-    type_events.group_by(&:repo_name).each do |repo_name, repo_events|
-      report << "#{repo_events.count} #{type} #{repo_name}"
+  events = events.group_by(&:type)
+
+  events.each_key do |type|
+    # Count WatchEvents then list the watched repos.
+    case type
+      when 'WatchEvent'
+        report << "Watched #{events['WatchEvent'].count} repositories"
+      when 'PushEvent'
+        events[type].group_by(&:repo_name).each do |name, repo_events|
+          report << "#{repo_events.count} #{repo_events.count == 1 ? "push" : "pushes"} to #{name}"
+        end
+      else
+        report << "Unknown event '#{type}'"
     end
+    # Count PushEvents to each repository
+    #events['PushEvent'].each do |event|
+    #end
+
+    # Count CreateEvents
+    #events['CreateEvent'].each do |event|
+    #end
   end
 
   return report
@@ -159,11 +177,21 @@ def main username
 
   puts "Fetching peers activity..."
 
-  output = user.peers.map do |peer|
-    Thread.new { ["-- #{peer.login}", summarize_events(peer.weeks_events)] }
-  end.map { |t| t.join; t.value }
+  # Events are retrieved from the network, and cached.
+  # Do all of the event requests at once, in threads, then
+  # handle them sequentially
+  user.peers.map do |peer|
+    Thread.new { peer.events}
+  end.each(&:join)
 
-  puts output
+  user.peers.each do |peer|
+    if peer.weeks_events.length > 0
+      puts "-- #{peer.login}"
+      puts summarize_events peer.weeks_events
+    end
+  end
+
+
 end
 
 main 'everett1992'
