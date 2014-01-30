@@ -170,6 +170,7 @@ def main
     if peer.weeks_events.length > 0
       puts "-- #{peer.login}"
       puts summarize_events peer.weeks_events
+      puts
     end
   end
 end
