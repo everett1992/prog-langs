@@ -1,6 +1,5 @@
 #!/bin/env ruby
 
-require 'benchmark'
 require 'json'
 require 'open-uri'
 
@@ -147,11 +146,18 @@ def summarize_events events
   return report
 end
 
-def main username
+def main
+
+  username = ARGV.first
+  if username.nil?
+    puts "Missing username"
+    exit
+  end
+
   user = User.new username
   puts user.login
 
-  puts "Fetching peers activity..."
+  puts "Fetching #{user.login}'s peers activity..."
 
   # Events are retrieved from the network, and cached.
   # Do all of the event requests at once, in threads, then
@@ -168,4 +174,4 @@ def main username
   end
 end
 
-main 'everett1992'
+main
