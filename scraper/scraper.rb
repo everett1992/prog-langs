@@ -79,8 +79,8 @@ class User
     @followers ||= get_users followers_url
   end
 
-  def weeks_events
-    events.select { |event| event.created_at > 1.week.ago }
+  def recent_events(time=:weeks)
+    events.select { |event| event.created_at > 1.method(time).call.ago }
   end
 
   def events
@@ -91,7 +91,7 @@ class User
   # time must be one of [:seconds, :minutes, :hours, :days, :weeks, :months]
   def summarize_events(time=:weeks)
     report = Array.new
-    events = @events.select { |e| e.created_at > 1.method(time).call.ago }
+    events = recent_events(time)
       .group_by(&:type)
 
     events.each_key do |type|
@@ -183,9 +183,10 @@ def print_user_events username, time_frame=:weeks
   end.each(&:join)
 
   user.peers.each do |peer|
-    if peer.weeks_events.length > 0
+    if peer.recent_events(time_frame).length > 0
       puts "-- #{peer.login}"
-      puts peer.summarize_events time_frame
+      # Indent each line of the report
+      puts peer.summarize_events(time_frame).map { |line| "  #{line}" }
       puts
     end
   end
