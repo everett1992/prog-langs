@@ -1,16 +1,41 @@
 #!/bin/env ruby
 
+require 'optparse'
 require 'json'
 require 'open-uri'
 
 # Add time units to Numerics
 class Numeric
 
+  def seconds
+    self
+  end
+  alias :second :seconds
+
+  def minutes
+    self * 60.seconds
+  end
+  alias :minute :minutes
+
+  def hours
+    self * 60.minutes
+  end
+  alias :hour :hours
+
+  def days
+    self * 24.hours
+  end
+  alias :day :days
+
   def weeks
-    #      days * hours * minutes * seconds
-    self * 7    * 24    * 60      * 60
+    self * 7.days
   end
   alias :week :weeks
+
+  def months
+    self * 4.weeks
+  end
+  alias :month :months
 
   def ago
     Time.now - self
@@ -63,6 +88,43 @@ class User
       .map { |event| Event.new event }
   end
 
+  # time must be one of [:seconds, :minutes, :hours, :days, :weeks, :months]
+  def summarize_events(time=:weeks)
+    report = Array.new
+    events = @events.select { |e| e.created_at > 1.method(time).call.ago }
+      .group_by(&:type)
+
+    events.each_key do |type|
+      # Count WatchEvents then list the watched repos.
+      case type
+        when 'WatchEvent'
+          report << "Watched #{events['WatchEvent'].count} repositories"
+        when 'PushEvent'
+          events[type].group_by(&:repo_name).each do |name, repo_events|
+            count = repo_events.count
+            pushes = count == 1 ? 'push' : 'pushes'
+            report << "#{count} #{pushes} to #{name}"
+          end
+        when 'CreateEvent'
+          events[type].group_by(&:ref_type).each do |ref_type, type_events|
+            type_events.each do |event|
+              case ref_type
+              when 'repository'
+                report << "Created repository #{event.repo_name}"
+              when 'branch'
+                report << "Created branch #{event.branch} in #{event.repo_name}"
+              else
+                report << "Created #{ref_type}"
+              end
+            end
+          end
+        else
+          report << "Unknown event '#{type}'"
+      end
+    end
+    return report
+  end
+
   def to_s
     login
   end
@@ -106,58 +168,12 @@ class Event
   end
 end
 
-def summarize_events events
-  report = Array.new
-  events = events.group_by(&:type)
-
-  events.each_key do |type|
-    # Count WatchEvents then list the watched repos.
-    case type
-      when 'WatchEvent'
-        report << "Watched #{events['WatchEvent'].count} repositories"
-      when 'PushEvent'
-        events[type].group_by(&:repo_name).each do |name, repo_events|
-          count = repo_events.count
-          pushes = count == 1 ? 'push' : 'pushes'
-          report << "#{count} #{pushes} to #{name}"
-        end
-      when 'CreateEvent'
-        events[type].group_by(&:ref_type).each do |ref_type, type_events|
-          type_events.each do |event|
-            case ref_type
-            when 'repository'
-              puts "Created repository #{event.repo_name}"
-            when 'branch'
-              puts "Created branch #{event.branch} in #{event.repo_name}"
-            else
-              puts "Created #{ref_type}"
-            end
-          end
-        end
-      else
-        report << "Unknown event '#{type}'"
-    end
-
-    # Count CreateEvents
-    #events['CreateEvent'].each do |event|
-    #end
-  end
-
-  return report
-end
-
-def main
-
-  username = ARGV.first
-  if username.nil?
-    puts "Missing username"
-    exit
-  end
+def print_user_events username, time_frame=:weeks
 
   user = User.new username
   puts user.login
 
-  puts "Fetching #{user.login}'s peers activity..."
+  puts "Fetching #{user.login}'s peers activity in the past #{time_frame}..."
 
   # Events are retrieved from the network, and cached.
   # Do all of the event requests at once, in threads, then
@@ -169,10 +185,49 @@ def main
   user.peers.each do |peer|
     if peer.weeks_events.length > 0
       puts "-- #{peer.login}"
-      puts summarize_events peer.weeks_events
+      puts peer.summarize_events time_frame
       puts
     end
   end
 end
 
-main
+def main
+  # Default options
+  o = OpenStruct.new(time: :week, username: nil)
+
+  opt_parser = OptionParser.new do |opts|
+    opts.banner = "Usage: #{$0} [options] username"
+
+    times = [:hour, :day, :week, :month]
+    message = ["Show messages from the last TIME (defaults to #{o.time})",
+        "Avaliable options are (#{times.join(', ')})"]
+
+    opts.on('-t', '--time=TIME', times, *message) do |time|
+      o.time = time
+    end
+
+    opts.on_tail('-h', '--help', 'Show this message') do
+      puts opts
+      exit
+    end
+  end
+
+  begin
+    opt_parser.parse! ARGV
+  rescue OptionParser::ParseError => ex
+    $stderr.puts "#{$0}: #{ex.message}"
+    $stderr.puts "Try '#{$0} --help' for more information"
+    exit
+  end
+
+  o.username = ARGV.first
+  if o.username.nil?
+    $stderr.puts "#{$0}: missing username operand"
+    $stderr.puts "Try '#{$0} --help' for more information"
+    exit
+  end
+
+  print_user_events o.username, o.time
+end
+
+main # call main
