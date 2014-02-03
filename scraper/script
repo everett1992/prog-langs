@@ -1,0 +1,79 @@
+Script started on Mon 03 Feb 2014 01:01:37 PM EST
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                                                                                                                                            [0m[27m[24m[J[34m[35m~/workspace/prog-langs/scraper[36m(±master) [00m[36m»[00m [K../scraper.rb[1m [0m[0m -h
+[00mUsage: ./scraper.rb [options] username
+    -t, --time=TIME                  Show messages from the last TIME (defaults to week)
+                                     Avaliable options are (hour, day, week, month)
+    -h, --help                       Show this message
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                                                                                                                                            [0m[27m[24m[J[34m[35m~/workspace/prog-langs/scraper[36m(±master) [00m[36m»[00m [K../scraper.rb[1m [0m[0m everett1992
+[00meverett1992
+Fetching everett1992's peers activity in the past week...
+-- tommyvyo
+  Watched 1 repositories
+
+-- exchgr
+  3 pushes to exchgr/dotfiles
+  2 pushes to exchgr/base16-vim
+  Unknown event 'IssuesEvent'
+  Created branch master in exchgr/VorbisPlayer
+  Created repository exchgr/VorbisPlayer
+
+-- Solumin
+  Created repository Solumin/CSC435
+  Created repository Solumin/GGJ14-YAB
+  Created branch master in Solumin/GGJ14-YAB
+  3 pushes to Solumin/GGJ14-YAB
+  1 push to Solumin/solumin.vim
+
+-- michaelgruber
+  4 pushes to michaelgruber/dotfiles
+  7 pushes to michaelgruber/emily
+  1 push to michaelgruber/st3
+  Created branch master in michaelgruber/emily
+  Created branch master in michaelgruber/emily
+  Created branch master in michaelgruber/emily
+  Watched 2 repositories
+
+-- EddieSpencer
+  7 pushes to EddieSpencer/CrestronApp
+  Created branch master in EddieSpencer/CS435
+  Created branch master in EddieSpencer/CrestronApp
+  Created repository EddieSpencer/CS435
+  Created repository EddieSpencer/CrestronApp
+
+-- davehand
+  Watched 9 repositories
+
+-- thoney
+  Unknown event 'GollumEvent'
+  3 pushes to The-Apiary/the-apiary.github.io
+  7 pushes to The-Apiary/VocalEyes
+  Created branch master in The-Apiary/VocalEyes
+  Unknown event 'DeleteEvent'
+
+-- goakley
+  Watched 2 repositories
+  Created branch master in goakley/Hackskell
+  5 pushes to goakley/Hackskell
+
+-- ngvitovitch
+  11 pushes to The-Apiary/VocalEyes
+  Created branch master in The-Apiary/VocalEyes
+  Created branch master in The-Apiary/VocalEyes
+
+-- patricelliG
+  5 pushes to patricelliG/hn_cli
+  3 pushes to patricelliG/CLI_HN
+  Created repository patricelliG/CLI_HN
+
+-- wnda
+  Watched 2 repositories
+
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                                                                                                                                            [0m[27m[24m[J[34m[35m~/workspace/prog-langs/scraper[36m(±master) [00m[36m»[00m [K./scraper.rb everett1992 -t hours 
+[00meverett1992
+Fetching everett1992's peers activity in the past hour...
+-- Solumin
+  Created repository Solumin/CSC435
+
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                                                                                                                                            [0m[27m[24m[J[34m[35m~/workspace/prog-langs/scraper[36m(±master) [00m[36m»[00m [Keexit
+[00m
+Script done on Mon 03 Feb 2014 01:01:57 PM EST
