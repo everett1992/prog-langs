@@ -1,8 +1,13 @@
 class Square
-  attr_reader :x, :y, :val
+  attr_reader :x, :y
+  attr_accessor :val
 
   def initialize(x, y, val)
     @x, @y, @val = x, y, val
+  end
+  
+  def filled?
+    val.nil?
   end
 
   def pos
