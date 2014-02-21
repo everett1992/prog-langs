@@ -2,21 +2,22 @@ require './square'
 
 # Sudoku puzzle class
 class Sudoku
-  attr_reader :puzzle, :cols, :rows, :boxes
+  include Enumerable
+  attr_reader :pz, :cols, :rows, :boxes
 
   def initialize puzzle
     raise "Sudoku must be a square 2d array" unless puzzle.square?
     raise "Sudoku size must be a square number, was #{puzzle.size}" unless puzzle.size.square?
-    @puzzle = puzzle.each_with_index.map { |row, x| row.each_with_index.map { |cell, y| Square.new(x, y, cell) } }
+    @pz = puzzle.each_with_index.map { |row, x| row.each_with_index.map { |cell, y| Square.new(x, y, cell) } }
 
-    @rows = @puzzle
+    @rows = @pz
 
-    @cols = @puzzle.transpose
+    @cols = @pz.transpose
 
-    @boxes = (0...@puzzle.size)
-      .each_slice(Math.sqrt @puzzle.size).to_a
+    @boxes = (0...@pz.size)
+      .each_slice(Math.sqrt @pz.size).to_a
       .repeated_permutation(2)
-      .map { |f, s| f.product(s).map { |x, y| @puzzle[x][y] } }
+      .map { |f, s| f.product(s).map { |x, y| @pz[x][y] } }
   end
 
   # Returns legal values for the passed space
@@ -30,21 +31,25 @@ class Sudoku
       .map(&:val)
 
     # Return all valid numbers not in contention
-    (1..@puzzle.size).to_a - contention
+    possible_values.to_a - contention
   end
 
   def next_move
-    naked_single #|| unique_candidate
+    naked_single || unique_candidate
+  end
+
+  def solve
+    while next_move
+    end
   end
 
   # Fill any cells that have one legal
   # value
   def naked_single
     each_empty_cell do |cell|
-      pos = legal_values(*cell.pos)
-      if pos.length == 1
-        cell.val = pos.first
-        #@puzzle[cell.x][cell.y].val = pos.first
+      vals = legal_values(*cell.pos)
+      if vals.length == 1
+        cell.val = vals.first
         return cell
       end
     end
@@ -52,18 +57,16 @@ class Sudoku
   end
 
   def unique_candidate
-    each_empty_cell do |cell|
-      this = legal_values(*cell.pos)
-      others = (row(*cell.pos) + col(*cell.pos) + box(*cell.pos))
-        .reject { |s| s.pos == cell.pos }
-        .map { |n| legal_values(*n.pos) }
-        .flatten.uniq.sort
-
-      pos = this - others
-      if pos.length == 1
-        cell.val = pos.first
-        #puzzle[cell.x][cell.y].val = pos.first
-        return pos.first
+    [@rows, @cols, @boxes].each do |group_type|
+      group_type.each do |group|
+        Hash[possible_values.map do |val|
+          [val, group.select { |cell| legal_values(*cell.pos).include? val }]
+        end].each do |val, cells|
+          if cells.size == 1
+            cells.first.val = val
+            return cells.first
+          end
+        end
       end
     end
     return nil
@@ -72,7 +75,7 @@ class Sudoku
   # Iterate through all cells yielding x, y, and the cells
   # value to the block
   def each(&block)
-    @puzzle.each do |row|
+    @pz.each do |row|
       row.each do |cell|
         yield cell
       end
@@ -93,30 +96,38 @@ class Sudoku
   end
 
   def box(x, y)
-    n = Math.sqrt(@puzzle.size).to_i
+    n = Math.sqrt(@pz.size).to_i
     boxes[(x / n * n) + (y / n)]
   end
 
   def filled?(x, y)
-    !@puzzle[x][y].filled?
+    @pz[x][y].filled?
   end
 
   def to_s
-    boxed = lambda { |arr, min, maj| arr.each_slice(Math.sqrt @puzzle.size).map { |n| n.join(min) }.join(maj) }
+    boxed = lambda { |arr, min, maj| arr.each_slice(Math.sqrt @pz.size).map { |n| n.join(min) }.join(maj) }
 
-    main = @puzzle.map do |row|
+    main = @pz.map do |row|
       "┃#{boxed.call(row.map { |n| n.val || ' ' }, '│', '┃')}┃\n"
     end
 
-    n = "┠#{boxed.call(Array.new(@puzzle.size, '─'), '┼', '╂')}┨\n"
-    m = "┣#{boxed.call(Array.new(@puzzle.size, '━'), '┿', '╋')}┫\n"
+    n = "┠#{boxed.call(Array.new(@pz.size, '─'), '┼', '╂')}┨\n"
+    m = "┣#{boxed.call(Array.new(@pz.size, '━'), '┿', '╋')}┫\n"
 
-    "┏#{boxed.call(Array.new(@puzzle.size, '━'), '┯', '┳')}┓\n" +
+    "┏#{boxed.call(Array.new(@pz.size, '━'), '┯', '┳')}┓\n" +
         boxed.call(main, n, m) +
-    "┗#{boxed.call(Array.new(@puzzle.size, '━'), '┷', '┻')}┛"
+    "┗#{boxed.call(Array.new(@pz.size, '━'), '┷', '┻')}┛"
   end
 
   def self.blank(n)
     Sudoku.new Array.new(n, Array.new(n, nil))
+  end
+
+  def possible_values
+    (1..@pz.size)
+  end
+
+  def solved?
+    all?(&:filled?)
   end
 end

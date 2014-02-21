@@ -15,10 +15,22 @@ ss = [
   [nil, nil, 9,   nil, nil, nil, nil, 5,   4  ],
 ]
 
-sudoku = Sudoku.new(ss)
+hs = [
+  [nil, 1,   nil, nil, nil, 3,   nil, 5,   nil],
+  [9,   nil, nil, nil, nil, 2,   nil, nil, 1  ],
+  [nil, nil, 3,   9,   nil, 6,   nil, nil, 8  ],
+  [nil, nil, 5,   nil, 2,   nil, 9,   1,   nil],
+  [nil, nil, nil, nil, nil, nil, nil, nil, nil],
+  [nil, 8,   2,   nil, 9,   nil, 5,   nil, nil],
+  [1,   nil, nil, 3,   nil, 7,   8,   nil, nil],
+  [8,   nil, nil, 2,   nil, nil, nil, nil, 4  ],
+  [nil, 6,   nil, 8,   nil, nil, nil, 9,   nil]
+]
 
-puts sudoku
-while p sudoku.next_move
+[ss, hs].each do |pz|
+  puts "-- puzzle"
+  sudoku = Sudoku.new(pz)
+  puts sudoku
+  sudoku.solve
   puts sudoku
 end
-puts sudoku

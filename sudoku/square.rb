@@ -7,7 +7,7 @@ class Square
   end
   
   def filled?
-    val.nil?
+    !val.nil?
   end
 
   def pos
