@@ -15,9 +15,10 @@ ss = [
   [nil, nil, 9,   nil, nil, nil, nil, 5,   4  ],
 ]
 
-
 sudoku = Sudoku.new(ss)
 
-while sudoku.next_move
+puts sudoku
+while p sudoku.next_move
+  puts sudoku
 end
 puts sudoku

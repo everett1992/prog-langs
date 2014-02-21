@@ -17,4 +17,5 @@ class Square
   def to_s
     "#{@x}, #{@y}: #{@val}"
   end
+  alias :inspect :to_s
 end

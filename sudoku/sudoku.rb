@@ -34,7 +34,7 @@ class Sudoku
   end
 
   def next_move
-    naked_single || unique_candidate
+    naked_single #|| unique_candidate
   end
 
   # Fill any cells that have one legal
@@ -43,8 +43,9 @@ class Sudoku
     each_empty_cell do |cell|
       pos = legal_values(*cell.pos)
       if pos.length == 1
-        @puzzle[cell.x][cell.y].val = pos.first
-        return pos.first
+        cell.val = pos.first
+        #@puzzle[cell.x][cell.y].val = pos.first
+        return cell
       end
     end
     return nil
@@ -93,7 +94,7 @@ class Sudoku
 
   def box(x, y)
     n = Math.sqrt(@puzzle.size).to_i
-    boxes[(x % n) + (y % n * n)]
+    boxes[(x / n * n) + (y / n)]
   end
 
   def filled?(x, y)
@@ -113,5 +114,9 @@ class Sudoku
     "┏#{boxed.call(Array.new(@puzzle.size, '━'), '┯', '┳')}┓\n" +
         boxed.call(main, n, m) +
     "┗#{boxed.call(Array.new(@puzzle.size, '━'), '┷', '┻')}┛"
+  end
+
+  def self.blank(n)
+    Sudoku.new Array.new(n, Array.new(n, nil))
   end
 end
