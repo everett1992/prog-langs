@@ -15,10 +15,30 @@ end
 
 class Sudoku
   attr_reader :puzzle
+
   def initialize puzzle
     raise "Sudoku must be a square 2d array" unless puzzle.square?
     raise "Sudoku size must be a square number, was #{puzzle.size}" unless puzzle.size.square?
     @puzzle = puzzle
+  end
+
+  def possibles(x, y)
+    (1..@puzzle.size).reject { |n| row(x,y).include?(n) || column(x,y).include?(n) || box(x,y).include?(n) }
+  end
+
+  def next_move
+    @puzzle.each_with_index do |row, x|
+      row.each_with_index do |cell, y|
+        unless cell
+          pos = possibles(x,y)
+          if pos.length == 1
+            @puzzle[x][y] = pos.first
+            return {x: x, y: y, val: pos.first}
+          end
+        end
+      end
+    end
+    return nil
   end
 
   def row(x, y)
@@ -40,18 +60,18 @@ class Sudoku
   end
 
   def to_s
-    box = lambda { |arr, min, maj| arr.each_slice(Math.sqrt @puzzle.size).map { |n| n.join(min) }.join(maj) }
+    boxed = lambda { |arr, min, maj| arr.each_slice(Math.sqrt @puzzle.size).map { |n| n.join(min) }.join(maj) }
 
     main = @puzzle.map do |row|
-      "┃#{box.call(row.map { |n| n || ' ' }, '│', '┃')}┃\n"
+      "┃#{boxed.call(row.map { |n| n || ' ' }, '│', '┃')}┃\n"
     end
 
-    n = "┠#{box.call(Array.new(@puzzle.size, '─'), '┼', '╂')}┨\n"
-    m = "┣#{box.call(Array.new(@puzzle.size, '━'), '┿', '╋')}┫\n"
+    n = "┠#{boxed.call(Array.new(@puzzle.size, '─'), '┼', '╂')}┨\n"
+    m = "┣#{boxed.call(Array.new(@puzzle.size, '━'), '┿', '╋')}┫\n"
 
-    "┏#{box.call(Array.new(@puzzle.size, '━'), '┯', '┳')}┓\n" +
-        box.call(main, n, m) +
-    "┗#{box.call(Array.new(@puzzle.size, '━'), '┷', '┻')}┛"
+    "┏#{boxed.call(Array.new(@puzzle.size, '━'), '┯', '┳')}┓\n" +
+        boxed.call(main, n, m) +
+    "┗#{boxed.call(Array.new(@puzzle.size, '━'), '┷', '┻')}┛"
   end
 end
 
@@ -72,7 +92,6 @@ ss = [
 
 sudoku = Sudoku.new(ss)
 puts sudoku
-
-#p sudoku.row(0,0)
-#p sudoku.column(0,0)
-#p sudoku.box(0,0)
+while sudoku.next_move
+end
+puts sudoku
