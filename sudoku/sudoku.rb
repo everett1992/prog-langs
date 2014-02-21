@@ -2,12 +2,21 @@ require './square'
 
 # Sudoku puzzle class
 class Sudoku
-  attr_reader :puzzle
+  attr_reader :puzzle, :cols, :rows, :boxes
 
   def initialize puzzle
     raise "Sudoku must be a square 2d array" unless puzzle.square?
     raise "Sudoku size must be a square number, was #{puzzle.size}" unless puzzle.size.square?
     @puzzle = puzzle.each_with_index.map { |row, x| row.each_with_index.map { |cell, y| Square.new(x, y, cell) } }
+
+    @rows = @puzzle
+
+    @cols = @puzzle.transpose
+
+    @boxes = (0...@puzzle.size)
+      .each_slice(Math.sqrt @puzzle.size).to_a
+      .repeated_permutation(2)
+      .map { |f, s| f.product(s).map { |x, y| @puzzle[x][y] } }
   end
 
   # Returns legal values for the passed space
@@ -52,7 +61,6 @@ class Sudoku
       pos = this - others
       if pos.length == 1
         cell.val = pos.first
-        puts "unique_candidate, #{cell}"
         #puzzle[cell.x][cell.y].val = pos.first
         return pos.first
       end
@@ -76,21 +84,16 @@ class Sudoku
   end
 
   def row(x, _)
-    @puzzle[x]
+    rows[x]
   end
 
   def col(_, y)
-    @puzzle.transpose[y]
+    cols[y]
   end
 
   def box(x, y)
     n = Math.sqrt(@puzzle.size).to_i
-
-    (((x / n) * n)...((x / n + 1) * n)).map do |x_1|
-      (((y / n) * n)...((y / n + 1) * n)).map do |y_1|
-        @puzzle[x_1][y_1]
-      end
-    end.flatten
+    boxes[(x % n) + (y % n * n)]
   end
 
   def filled?(x, y)

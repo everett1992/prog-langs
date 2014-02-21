@@ -18,7 +18,6 @@ ss = [
 
 sudoku = Sudoku.new(ss)
 
-puts sudoku
 while sudoku.next_move
 end
 puts sudoku
