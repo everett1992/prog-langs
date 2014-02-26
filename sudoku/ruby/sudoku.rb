@@ -163,14 +163,14 @@ class Sudoku
     boxed = lambda { |arr, min, maj| arr.each_slice(Math.sqrt @size).map { |n| n.join(min) }.join(maj) }
 
     main = @pz.each_slice(@size).map do |row|
-      "┃#{boxed.call(row.map { |n| char_map[n] }, '│', '┃')}┃\n"
+      "|#{boxed.call(row.map { |n| char_map[n] }, ' ', '|')}|\n"
     end
 
-    n = "┠#{boxed.call(Array.new(@size, '─'), '┼', '╂')}┨\n"
-    m = "┣#{boxed.call(Array.new(@size, '━'), '┿', '╋')}┫\n"
+    n = "|#{boxed.call(Array.new(@size, ' '), ' ', '|')}|\n"
+    m = "|#{boxed.call(Array.new(@size, '-'), '-', '+')}|\n"
 
-    "┏#{boxed.call(Array.new(@size, '━'), '┯', '┳')}┓\n" +
+    "+#{boxed.call(Array.new(@size, '-'), '-', '+')}+\n" +
         boxed.call(main, n, m) +
-    "┗#{boxed.call(Array.new(@size, '━'), '┷', '┻')}┛"
+    "+#{boxed.call(Array.new(@size, '-'), '-', '+')}+"
   end
 end
