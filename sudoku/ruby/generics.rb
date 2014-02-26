@@ -14,4 +14,8 @@ class Numeric
   end
 end
 
-
+class Object
+  def try method
+    send method if self.respond_to? method
+  end
+end
