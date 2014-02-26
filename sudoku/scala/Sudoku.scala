@@ -8,8 +8,21 @@ object SudokuSolver extends App {
 
     val size = Math.sqrt(puzzle.length).toInt
 
-    def solution: Sudoku = {
-      this
+    def solution: Option[Sudoku] = {
+      if (is_solved) { return Option(this) }
+
+      val i = puzzle.zipWithIndex
+        .filter(e => e._1 == 0)
+        .sortBy(i => legal_values(i._2).length)
+        .head._2
+
+      legal_values(i).map(value =>
+        fill(i, value).solution
+      ).filter(opz => opz.exists(_.is_solved)).map(_.get).headOption
+    }
+
+    def fill(i: Int, value: Int): Sudoku = {
+      new Sudoku(puzzle.updated(i, value))
     }
 
     def is_solved: Boolean = {
@@ -27,31 +40,26 @@ object SudokuSolver extends App {
       (row_id(n) / sqrt_size) + (col_id(n) / sqrt_size) * sqrt_size
     }
 
-    def rows: List[List[Int]] = {
-      puzzle.zipWithIndex.groupBy( e => row_id(e._2) ).map( n =>
-        n._2.map( e => e._1)
-      ).toList
+
+    def rows: Map[Int, List[Int]] = {
+      puzzle.zipWithIndex.groupBy( e => row_id(e._2) ).map( e =>
+        (e._1, e._2.map(n => n._1))
+      )
     }
 
-    def cols: List[List[Int]] = {
-      puzzle.zipWithIndex.groupBy( e => col_id(e._2) ).map( n =>
-        n._2.map( e => e._1)
-      ).toList
+    def cols: Map[Int, List[Int]] = {
+      puzzle.zipWithIndex.groupBy( e => col_id(e._2) ).map( e =>
+        (e._1, e._2.map(n => n._1))
+      )
     }
 
-    def boxes: List[List[Int]] = {
-      puzzle.zipWithIndex.groupBy( e => box_id(e._2) ).map( n =>
-        n._2.map( e => e._1)
-      ).toList
+    def boxes: Map[Int, List[Int]] = {
+      puzzle.zipWithIndex.groupBy( e => box_id(e._2) ).map( e =>
+        (e._1, e._2.map(n => n._1))
+      )
     }
 
     def legal_values(n:Int): List[Int] = {
-      println("row")
-      println(rows.apply(row_id(n)))
-      println("col")
-      println(cols.apply(col_id(n)))
-      println("box")
-      println(boxes.apply(box_id(n)))
       puzzle.apply(n) match {
         case 0 =>
         (1 to size).toList
@@ -64,8 +72,7 @@ object SudokuSolver extends App {
 
     override def toString: String = {
       // Map list of integers to list of strings, replace 0 with empty string
-      //val puzzle_string = puzzle.map( e => if (e == 0) " " else e.toString )
-      val puzzle_string = puzzle.indices.toList.map( e => box_id(e).toString)
+      val puzzle_string = puzzle.map( e => if (e == 0) " " else e.toString )
 
       puzzle_string.grouped(size).map( lst => lst.mkString(" ") ).mkString("\n")
 
@@ -99,6 +106,5 @@ object SudokuSolver extends App {
     0, 0, 6, 5, 0, 0, 0, 0, 9) )
 
   println(sudoku)
-  println(sudoku.legal_values(2))
-  println(sudoku.legal_values(4))
+  println(sudoku.solution.get)
 }
