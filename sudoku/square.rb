@@ -7,7 +7,7 @@ class Square
   end
   
   def filled?
-    val.nil?
+    !val.nil?
   end
 
   def pos
@@ -17,4 +17,5 @@ class Square
   def to_s
     "#{@x}, #{@y}: #{@val}"
   end
+  alias :inspect :to_s
 end
