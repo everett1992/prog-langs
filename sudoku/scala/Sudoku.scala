@@ -26,7 +26,7 @@ object SudokuSolver extends App {
         .sortBy(i => legal_values(i._2).size)
         .head._2
 
-      legal_values(i).map(value =>
+      legal_values(i).par.map(value =>
         fill(i, value).solution
       ).filter(opz => opz.exists(_.is_solved)).map(_.get).headOption
     }
@@ -50,15 +50,25 @@ object SudokuSolver extends App {
     def hidden_singles: Boolean = {
 
       // Add scala to the list of languages I shouldn't be allowed near
-      val hidden_singles = rows_with_index.map(e => e._2.filter(_._1 == 0))
-        .map(e => e.map(n => (legal_values(n._2), n._2)))
-        .map(row => (1 to size).map( value =>
-          (value, row.filter(_._1.contains(value)).map(_._2)))
-          .filter(e => e._2.size == 1).map(e => (e._1, e._2.head))
-        ).flatten
+      def get_hidden_singles(groups: Map[Int, List[(Int, Int)]]) = {
+        groups.par.map(e => e._2.filter(_._1 == 0))
+          .map(e => e.map(n => (legal_values(n._2), n._2)))
+          .map(group => (1 to size).map( value =>
+            (value, group.filter(_._1.contains(value)).map(_._2)))
+            .filter(e => e._2.size == 1).map(e => (e._1, e._2.head))
+          ).flatten
+      }
 
-      hidden_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
-      hidden_singles.size >= 1
+      val hidden_row_singles = get_hidden_singles(rows_with_index)
+      hidden_row_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
+
+      val hidden_col_singles = get_hidden_singles(cols_with_index)
+      hidden_col_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
+
+      val hidden_box_singles = get_hidden_singles(boxes_with_index)
+      hidden_box_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
+
+      hidden_row_singles.size >= 1 || hidden_col_singles.size >= 1 || hidden_box_singles.size >= 1
     }
 
     def fill(i: Int, value: Int): Sudoku = {
