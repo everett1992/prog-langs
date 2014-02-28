@@ -69,8 +69,8 @@ object SudokuSolver extends App {
       def get_hidden_singles(groups: Map[Int, List[(Int, Int)]]) = {
         groups.par.map(e => e._2.filter(_._1 == 0))
           .map(e => e.map(n => (legal_values(n._2), n._2)))
-          .map(group => (1 to size).map( value =>
-            (value, group.filter(_._1.contains(value)).map(_._2)))
+          .map(group => (1 to size)
+            .map( value => (value, group.filter(_._1.contains(value)).map(_._2)))
             .filter( e => e._2.size == 1 )
             .map( e => (e._1, e._2.head) )
           ).flatten
@@ -88,9 +88,12 @@ object SudokuSolver extends App {
 
     // True if each row, column, and box doesn't have any repeated values.
     def is_legal: Boolean = {
-      Set(rows, cols, boxes).map(_.values.toList).forall(groups =>
-        groups.map(e => e.filter( _ != 0 ) )
-          .forall(v => v.distinct.size == v.size))
+      Set(rows, cols, boxes)
+        .map(_.values.toList)
+        .forall(groups => groups
+          .map(e => e.filter( _ != 0 ) )
+          .forall(v => v.distinct.size == v.size)
+        )
     }
 
     // Index of the cell's row.
