@@ -1,18 +1,26 @@
+// Caleb Everett                                                     02/27/2013
+// TCNJ - Programming Languages                                   Scala Project
+
 object SudokuSolver extends App {
 
   class Sudoku(var puzzle: List[Int]) {
+    // Check that the passed list can be treated as a square two dimentional
+    //array, where each edge is a square length.
     if (puzzle.size % Math.sqrt(puzzle.size) != 0 ||
         Math.sqrt(puzzle.size) % Math.sqrt(Math.sqrt(puzzle.size)) != 0) {
       throw new IllegalArgumentException("Puzzle must be square with square sides")
     }
 
+    // The edge-size of the sudoku puzzle.
     val size = Math.sqrt(puzzle.size).toInt
 
+    // Return the solution to this puzzle, if one exists.
     def solution: Option[Sudoku] = {
       if (is_solved) { return Option(this) }
 
       var did_naked_single = true
       var did_hidden_single = true
+
       while (did_naked_single || did_hidden_single) {
         did_naked_single = naked_singles
         did_hidden_single = hidden_singles
@@ -27,11 +35,15 @@ object SudokuSolver extends App {
         .head._2
 
       legal_values(i).par.map(value =>
-        fill(i, value).solution
+        new Sudoku(puzzle.updated(i, value)).solution
       ).filter(opz => opz.exists(_.is_solved)).map(_.get).headOption
     }
 
+    // Fill in any space that only has one legal value.
+    // TODO: rewrite this to remove the `set_single_value` function.
     def naked_singles: Boolean = {
+      // This is explicitly defined because scala doesn't support multi line
+      // simple expressions
       def set_single_value(e: (Int, Int)): Boolean = {
         val values = legal_values(e._2)
         if (values.size == 1) {
@@ -47,9 +59,16 @@ object SudokuSolver extends App {
         .count(e => set_single_value(e)) >= 1
     }
 
+    // Fill in any spaces in each row, column, or box where that space
+    // is the only space that can accept that value.
     def hidden_singles: Boolean = {
+      /*            ______               _ __    __     ____
+                   /_  __/__  __________(_) /_  / /__  / / /
+                    / / / _ \/ ___/ ___/ / __ \/ / _ \/ / /
+                   / / /  __/ /  / /  / / /_/ / /  __/_/_/
+                  /_/  \___/_/  /_/  /_/_.___/_/\___(_|_)
 
-      // Add scala to the list of languages I shouldn't be allowed near
+         Add scala to the list of languages I shouldn't be allowed near */
       def get_hidden_singles(groups: Map[Int, List[(Int, Int)]]) = {
         groups.par.map(e => e._2.filter(_._1 == 0))
           .map(e => e.map(n => (legal_values(n._2), n._2)))
@@ -59,6 +78,7 @@ object SudokuSolver extends App {
           ).flatten
       }
 
+      // TODO: combine these calls functionally.
       val hidden_row_singles = get_hidden_singles(rows_with_index)
       hidden_row_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
 
@@ -71,24 +91,15 @@ object SudokuSolver extends App {
       hidden_row_singles.size >= 1 || hidden_col_singles.size >= 1 || hidden_box_singles.size >= 1
     }
 
-    def fill(i: Int, value: Int): Sudoku = {
-      new Sudoku(puzzle.updated(i, value))
-    }
-
-    // True if the puzzle is completely filled,
-    // and legal.
+    // True if the puzzle is completely filled, and legal.
     def is_solved: Boolean = {
       puzzle.forall( e => e != 0 ) && is_legal
     }
 
-    // True if each row, column, and box
-    // doesn't have repeated values.
+    // True if each row, column, and box doesn't have any repeated values.
     def is_legal: Boolean = {
-      Set(rows, cols, boxes).map(_.values.toList).forall(values =>
-        // If the set of distinct values in group is equal
-        // to the group there are no duplicates
-        values.distinct.size == values.size
-      )
+      Set(rows, cols, boxes)
+        .map(_.values.toList).forall(v => v.distinct.size == v.size)
     }
 
     // Index of the cell's row.
@@ -106,11 +117,7 @@ object SudokuSolver extends App {
     // Map of rows by row id
     def rows: Map[Int, List[Int]] = {
       puzzle.zipWithIndex.groupBy( e => row_id(e._2) ).map( e =>
-        (e._1, e._2.map(n => n._1))
-      )
-    }
-    def rows_with_index: Map[Int, List[(Int, Int)]] = {
-      puzzle.zipWithIndex.groupBy( e => row_id(e._2) ).map( e => (e._1, e._2) )
+        (e._1, e._2.map(n => n._1)))
     }
 
     // Map of columns by column id
@@ -119,15 +126,20 @@ object SudokuSolver extends App {
         (e._1, e._2.map(n => n._1))
       )
     }
-    def cols_with_index: Map[Int, List[(Int, Int)]] = {
-      puzzle.zipWithIndex.groupBy( e => col_id(e._2) ).map( e => (e._1, e._2) )
-    }
 
     // Map of boxes by box id
     def boxes: Map[Int, List[Int]] = {
       puzzle.zipWithIndex.groupBy( e => box_id(e._2) ).map( e =>
         (e._1, e._2.map(n => n._1))
       )
+    }
+
+    // Same as rows, cols, and boxes, but includes the index of each cell.
+    def cols_with_index: Map[Int, List[(Int, Int)]] = {
+      puzzle.zipWithIndex.groupBy( e => col_id(e._2) ).map( e => (e._1, e._2) )
+    }
+    def rows_with_index: Map[Int, List[(Int, Int)]] = {
+      puzzle.zipWithIndex.groupBy( e => row_id(e._2) ).map( e => (e._1, e._2) )
     }
     def boxes_with_index: Map[Int, List[(Int, Int)]] = {
       puzzle.zipWithIndex.groupBy( e => box_id(e._2) ).map( e => (e._1, e._2) )
@@ -147,6 +159,7 @@ object SudokuSolver extends App {
 
   }
 
+  // Print the sudoku puzzle all pretty like.
   def pretty(s: Sudoku): String = {
     val puzzle = s.puzzle
     val size = s.size
@@ -160,17 +173,32 @@ object SudokuSolver extends App {
     val boxed = (arr: List[String], min: String, maj: String) =>
       arr.grouped(Math.sqrt(size).toInt).map ( n => n.mkString(min) ).mkString(maj)
 
+    // 2d array representation of the following string.
+    // NOTE: to change the output format modify this string.
+    val so =
+      """┏━┯━┳━┯━┓
+         ┃ │ ┃ │ ┃
+         ┠─┼─╂─┼─┨
+         ┃ │ ┃ │ ┃
+         ┣━┿━╋━┿━┫
+         ┃ │ ┃ │ ┃
+         ┠─┼─╂─┼─┨
+         ┃ │ ┃ │ ┃
+         ┗━┷━┻━┷━┛""".split("\n").map( _.trim.toArray )
+     // return the char at position x,y
+     val bc = ( (x: Int, y: Int) => so.apply(x).apply(y).toString )
+
     // Formats the main body of the puzzle
     val main = puzzle_string.grouped(size).map( row =>
-      "|"+ boxed(row.map ( n => n ), " ", "|") + "|\n"
+      bc(1,0) + boxed(row.map ( n => n ), bc(1,2), bc(1,4)) + bc(1,8) + "\n"
     ).toList
 
-    val n = "|" + boxed((0 until size).toList.map(e=>" "), " ", "|") + "|\n"
-    val m = "|" + boxed((0 until size).toList.map(e=>"-"), "-", "+") + "|\n"
+    val n = bc(2,0) + boxed((0 until size).toList.map(e=>bc(2,1)), bc(2,2), bc(2,4)) + bc(2,8) + "\n"
+    val m = bc(4,0) + boxed((0 until size).toList.map(e=>bc(4,1)), bc(4,2), bc(4,4)) + bc(4,8) + "\n"
 
-    "+" + boxed((0 until size).toList.map(e=>"-"), "-", "+") + "\n" +
+    bc(0,0) + boxed((0 until size).toList.map(e => bc(0,1)), bc(0,2), bc(0,4)) + bc(0,8) + "\n" +
     boxed(main, n, m) +
-    "+" + boxed((0 until size).toList.map(e=>"-"), "-", "+") + "+"
+    bc(8,0) + boxed((0 until size).toList.map(e => bc(8,1)), bc(8,2), bc(8,4)) + bc(8,8) + "\n"
   }
 
   val sudoku = new Sudoku( List(
