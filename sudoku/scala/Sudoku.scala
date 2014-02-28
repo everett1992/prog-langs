@@ -237,7 +237,6 @@ object SudokuSolver extends App {
       val solution_option = sudoku.solution
 
       if (solution_option.nonEmpty) {
-        println(solution_option.get.is_legal)
         println(pretty(solution_option.get))
       } else {
         println("This puzzle doesn't have a solution")
