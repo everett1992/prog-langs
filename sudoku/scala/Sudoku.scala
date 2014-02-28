@@ -159,19 +159,29 @@ object SudokuSolver extends App {
 
   }
 
+  def parse = {
+    val char_map = (" " :: (1 to 9).toList.map(_.toString) ::: (if (size > 9) ('A' to ('A' + (size - 9)).toChar).map(_.toString).toList else Nil),
+      0 :: (1 to size).toList,
+    ).zipped.toMap
+  }
+
   // Print the sudoku puzzle all pretty like.
   def pretty(s: Sudoku): String = {
     val puzzle = s.puzzle
     val size = s.size
 
+    // Map of an integer to it's alpha numeric representation.
+    val char_map = (0 :: (1 to size).toList,
+      " " :: (1 to 9).toList.map(_.toString) ::: (if (size > 9) ('A' to ('A' + (size - 9)).toChar).map(_.toString).toList else Nil)
+    ).zipped.toMap
+
     // Map list of integers to list of strings, replace 0 with empty string
-    val puzzle_string = puzzle.map( e => if (e == 0) " " else e.toString )
+    val puzzle_string = puzzle.map( e => char_map.apply(e) )
 
-    puzzle_string.grouped(size).map( lst => lst.mkString(" ") ).mkString("\n")
-
-    // A funtion that joins a list with charecters to print
+    // Returns the passed List as a string, with the minor string placed inter-box
+    // and the major between boxes
     val boxed = (arr: List[String], min: String, maj: String) =>
-      arr.grouped(Math.sqrt(size).toInt).map ( n => n.mkString(min) ).mkString(maj)
+      arr.grouped(Math.sqrt(arr.size).toInt).map ( n => n.mkString(min) ).mkString(maj)
 
     // 2d array representation of the following string.
     // NOTE: to change the output format modify this string.
@@ -185,15 +195,18 @@ object SudokuSolver extends App {
          ┠─┼─╂─┼─┨
          ┃ │ ┃ │ ┃
          ┗━┷━┻━┷━┛""".split("\n").map( _.trim.toArray )
-     // return the char at position x,y
-     val bc = ( (x: Int, y: Int) => so.apply(x).apply(y).toString )
 
-    // Formats the main body of the puzzle
+    // return the box drawing char at position x,y
+    val bc = ( (x: Int, y: Int) => so.apply(x).apply(y).toString )
+
+    // Formats the lines of the puzzle containing numbers.
     val main = puzzle_string.grouped(size).map( row =>
       bc(1,0) + boxed(row.map ( n => n ), bc(1,2), bc(1,4)) + bc(1,8) + "\n"
     ).toList
 
+    // Horizontal inter-box lines
     val n = bc(2,0) + boxed((0 until size).toList.map(e=>bc(2,1)), bc(2,2), bc(2,4)) + bc(2,8) + "\n"
+    // Horizontal box dividors
     val m = bc(4,0) + boxed((0 until size).toList.map(e=>bc(4,1)), bc(4,2), bc(4,4)) + bc(4,8) + "\n"
 
     bc(0,0) + boxed((0 until size).toList.map(e => bc(0,1)), bc(0,2), bc(0,4)) + bc(0,8) + "\n" +
