@@ -1,6 +1,8 @@
 // Caleb Everett                                                     02/27/2013
 // TCNJ - Programming Languages                                   Scala Project
 
+import scala.io.Source
+
 object SudokuSolver extends App {
 
   class Sudoku(var puzzle: List[Int]) {
@@ -17,6 +19,7 @@ object SudokuSolver extends App {
     // Return the solution to this puzzle, if one exists.
     def solution: Option[Sudoku] = {
       if (is_solved) { return Option(this) }
+      if (!is_legal) { return None }
 
       var did_naked_single = true
       var did_hidden_single = true
@@ -29,11 +32,12 @@ object SudokuSolver extends App {
       }
 
       if (is_solved) { return Option(this) }
+      if (!is_legal) { return None }
 
       // Start guessing values for the cell with the fewest possible solutions.
       val i = puzzle.zipWithIndex
         .filter(e => e._1 == 0)
-        .sortBy(i => legal_values(i._2).size)
+        .sortBy(e => legal_values(e._2).size)
         .head._2
 
       legal_values(i).par.map(value =>
@@ -67,7 +71,8 @@ object SudokuSolver extends App {
           .map(e => e.map(n => (legal_values(n._2), n._2)))
           .map(group => (1 to size).map( value =>
             (value, group.filter(_._1.contains(value)).map(_._2)))
-            .filter(e => e._2.size == 1).map(e => (e._1, e._2.head))
+            .filter( e => e._2.size == 1 )
+            .map( e => (e._1, e._2.head) )
           ).flatten
       }
 
@@ -83,8 +88,9 @@ object SudokuSolver extends App {
 
     // True if each row, column, and box doesn't have any repeated values.
     def is_legal: Boolean = {
-      Set(rows, cols, boxes)
-        .map(_.values.toList).forall(v => v.distinct.size == v.size)
+      Set(rows, cols, boxes).map(_.values.toList).forall(groups =>
+        groups.map(e => e.filter( _ != 0 ) )
+          .forall(v => v.distinct.size == v.size))
     }
 
     // Index of the cell's row.
@@ -144,20 +150,25 @@ object SudokuSolver extends App {
 
   }
 
-  def parse(input: String): Sudoku = {
+  def parse(input: String): Option[Sudoku] = {
     // Input format is numbers 1-9, letters A-Z, blank spaces are '.'
 
     // The width of the puzzle is the length of the first line of input
     // i.e. the index of the first new line.
     val size = input.indexOf("\n")
+    if (size == 0) return None
 
     // Map tokens in input to integers
     val char_map = ("." :: (1 to 9).toList.map(_.toString) ::: (if (size > 9) ('A' to ('A' + (size - 9)).toChar).map(_.toString).toList else Nil),
       (0 to size).toList
     ).zipped.toMap
 
-    val list = input.replaceAll("\n", "").map(c => char_map.apply(c.toString) ).toList
-    new Sudoku(list)
+    try {
+      val list = input.replaceAll("\n", "").map(c => char_map.apply(c.toString) ).toList
+      Option(new Sudoku(list))
+    } catch {
+      case e: Exception => None
+    }
   }
 
   // Print the sudoku puzzle all pretty like.
@@ -209,42 +220,27 @@ object SudokuSolver extends App {
     bc(8,0) + boxed((0 until size).toList.map(e => bc(8,1)), bc(8,2), bc(8,4)) + bc(8,8) + "\n"
   }
 
-  val string =
-"""8....42..
-3...5..6.
-5...32...
-.......42
-.21...38.
-47.......
-...39...6
-.8..7...5
-..65....9"""
+  for (filename <- args) {
+    println(filename)
+    val puzzle_string_from_file = Source.fromFile(filename)
+      .getLines.mkString("\n")
 
-  val sudoku = parse(string)
+    val sudoku_option = parse(puzzle_string_from_file)
+    if (sudoku_option.nonEmpty) {
+      val sudoku = sudoku_option.get
 
-  val string2 =
-""".....9B..2..D5A.
-91.4..3.A.7...C.
-B..2..A..9....3.
-C...D..18.BF.46.
-....BD.G3.6A7...
-.F.B8C..DG97...1
-3.A..........246
-67.543......8...
-...87.....A9F.13
-G23.......5..C.A
-4...3G1F..289.5.
-...15A.64.3GB...
-.6B.21.35..4...F
-.3....9..1..5..4
-.5...F.4.B..382C
-.42F..DB.78....."""
+      println(pretty(sudoku))
 
-  val sudoku2 = parse(string2)
+      val solution_option = sudoku.solution
 
-  println(pretty(sudoku))
-  println(pretty(sudoku.solution.get))
-
-  println(pretty(sudoku2))
-  println(pretty(sudoku2.solution.get))
+      if (solution_option.nonEmpty) {
+        println(solution_option.get.is_legal)
+        println(pretty(solution_option.get))
+      } else {
+        println("This puzzle doesn't have a solution")
+      }
+    } else {
+      println("Couldn't parse puzzle from string")
+    }
+  }
 }
