@@ -22,8 +22,10 @@ object SudokuSolver extends App {
       var did_hidden_single = true
 
       while (did_naked_single || did_hidden_single) {
-        did_naked_single = naked_singles
-        did_hidden_single = hidden_singles
+        did_naked_single =
+          naked_singles.map(e => puzzle = puzzle.updated(e._2, e._1)).size > 0
+        did_hidden_single =
+          hidden_singles.map(e => puzzle = puzzle.updated(e._2, e._1)).size > 0
       }
 
       if (is_solved) { return Option(this) }
@@ -41,34 +43,25 @@ object SudokuSolver extends App {
 
     // Fill in any space that only has one legal value.
     // TODO: rewrite this to remove the `set_single_value` function.
-    def naked_singles: Boolean = {
-      // This is explicitly defined because scala doesn't support multi line
-      // simple expressions
-      def set_single_value(e: (Int, Int)): Boolean = {
-        val values = legal_values(e._2)
-        if (values.size == 1) {
-          puzzle = puzzle.updated(e._2, values.head)
-          true
-        } else {
-          false
-        }
-      }
-
+    def naked_singles: List[(Int, Int)] = {
       puzzle.zipWithIndex
-        .filter(_._1 == 0)
-        .count(e => set_single_value(e)) >= 1
+        .filter( _._1 == 0 )
+        .map(n => (legal_values(n._2), n._2) )
+        .filter( _._1.size == 1 )
+        .map(n => (n._1.head, n._2) )
     }
 
     // Fill in any spaces in each row, column, or box where that space
     // is the only space that can accept that value.
-    def hidden_singles: Boolean = {
+    // Returns true when a hidden single was set.
+    def hidden_singles: List[(Int, Int)] = {
       /*            ______               _ __    __     ____
                    /_  __/__  __________(_) /_  / /__  / / /
                     / / / _ \/ ___/ ___/ / __ \/ / _ \/ / /
                    / / /  __/ /  / /  / / /_/ / /  __/_/_/
                   /_/  \___/_/  /_/  /_/_.___/_/\___(_|_)
 
-         Add scala to the list of languages I shouldn't be allowed near */
+      Add scala to the list of languages I shouldn't be allowed near */
       def get_hidden_singles(groups: Map[Int, List[(Int, Int)]]) = {
         groups.par.map(e => e._2.filter(_._1 == 0))
           .map(e => e.map(n => (legal_values(n._2), n._2)))
@@ -78,17 +71,9 @@ object SudokuSolver extends App {
           ).flatten
       }
 
-      // TODO: combine these calls functionally.
-      val hidden_row_singles = get_hidden_singles(rows_with_index)
-      hidden_row_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
-
-      val hidden_col_singles = get_hidden_singles(cols_with_index)
-      hidden_col_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
-
-      val hidden_box_singles = get_hidden_singles(boxes_with_index)
-      hidden_box_singles.foreach(e => puzzle = puzzle.updated(e._2, e._1))
-
-      hidden_row_singles.size >= 1 || hidden_col_singles.size >= 1 || hidden_box_singles.size >= 1
+      // Get all of the hidden singles for each row, column, and box.
+      List(rows_with_index, cols_with_index, boxes_with_index)
+        .map ( get_hidden_singles(_) ).flatten.distinct
     }
 
     // True if the puzzle is completely filled, and legal.
@@ -159,10 +144,20 @@ object SudokuSolver extends App {
 
   }
 
-  def parse = {
-    val char_map = (" " :: (1 to 9).toList.map(_.toString) ::: (if (size > 9) ('A' to ('A' + (size - 9)).toChar).map(_.toString).toList else Nil),
-      0 :: (1 to size).toList,
+  def parse(input: String): Sudoku = {
+    // Input format is numbers 1-9, letters A-Z, blank spaces are '.'
+
+    // The width of the puzzle is the length of the first line of input
+    // i.e. the index of the first new line.
+    val size = input.indexOf("\n")
+
+    // Map tokens in input to integers
+    val char_map = ("." :: (1 to 9).toList.map(_.toString) ::: (if (size > 9) ('A' to ('A' + (size - 9)).toChar).map(_.toString).toList else Nil),
+      (0 to size).toList
     ).zipped.toMap
+
+    val list = input.replaceAll("\n", "").map(c => char_map.apply(c.toString) ).toList
+    new Sudoku(list)
   }
 
   // Print the sudoku puzzle all pretty like.
@@ -214,34 +209,38 @@ object SudokuSolver extends App {
     bc(8,0) + boxed((0 until size).toList.map(e => bc(8,1)), bc(8,2), bc(8,4)) + bc(8,8) + "\n"
   }
 
-  val sudoku = new Sudoku( List(
-    8, 0, 0, 0, 0, 4, 2, 0, 0,
-    3, 0, 0, 0, 5, 0, 0, 6, 0,
-    5, 0, 0, 0, 3, 2, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 4, 2,
-    0, 2, 1, 0, 0, 0, 3, 8, 0,
-    4, 7, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 3, 9, 0, 0, 0, 6,
-    0, 8, 0, 0, 7, 0, 0, 0, 5,
-    0, 0, 6, 5, 0, 0, 0, 0, 9) )
+  val string =
+"""8....42..
+3...5..6.
+5...32...
+.......42
+.21...38.
+47.......
+...39...6
+.8..7...5
+..65....9"""
 
-  val sudoku2 = new Sudoku( List(
-    0, 0, 0, 0, 0, 9, 11, 0, 0, 2, 0, 0, 13, 5, 10, 0,
-    9, 1, 0, 4, 0, 0, 3, 0, 10, 0, 7, 0, 0, 0, 12, 0,
-    11, 0, 0, 2, 0, 0, 10, 0, 0, 9, 0, 0, 0, 0, 3, 0,
-    12, 0, 0, 0, 13, 0, 0, 1, 8, 0, 11, 15, 0, 4, 6, 0,
-    0, 0, 0, 0, 11, 13, 0, 16, 3, 0, 6, 10, 7, 0, 0, 0,
-    0, 15, 0, 11, 8, 12, 0, 0, 13, 16, 9, 7, 0, 0, 0, 1,
-    3, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 6,
-    6, 7, 0, 5, 4, 3, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0,
-    0, 0, 0, 8, 7, 0, 0, 0, 0, 0, 10, 9, 15, 0, 1, 3,
-    16, 2, 3, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 12, 0, 10,
-    4, 0, 0, 0, 3, 16, 1, 15, 0, 0, 2, 8, 9, 0, 5, 0,
-    0, 0, 0, 1, 5, 10, 0, 6, 4, 0, 3, 16, 11, 0, 0, 0,
-    0, 6, 11, 0, 2, 1, 0, 3, 5, 0, 0, 4, 0, 0, 0, 15,
-    0, 3, 0, 0, 0, 0, 9, 0, 0, 1, 0, 0, 5, 0, 0, 4,
-    0, 5, 0, 0, 0, 15, 0, 4, 0, 11, 0, 0, 3, 8, 2, 12,
-    0, 4, 2, 15, 0, 0, 13, 11, 0, 7, 8, 0, 0, 0, 0, 0) )
+  val sudoku = parse(string)
+
+  val string2 =
+""".....9B..2..D5A.
+91.4..3.A.7...C.
+B..2..A..9....3.
+C...D..18.BF.46.
+....BD.G3.6A7...
+.F.B8C..DG97...1
+3.A..........246
+67.543......8...
+...87.....A9F.13
+G23.......5..C.A
+4...3G1F..289.5.
+...15A.64.3GB...
+.6B.21.35..4...F
+.3....9..1..5..4
+.5...F.4.B..382C
+.42F..DB.78....."""
+
+  val sudoku2 = parse(string2)
 
   println(pretty(sudoku))
   println(pretty(sudoku.solution.get))
