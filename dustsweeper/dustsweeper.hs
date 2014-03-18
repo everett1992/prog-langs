@@ -21,6 +21,12 @@ data Rug = Rug { is_explored :: Bool, is_dust :: Bool }
 type Board = [[Rug]]
 
 
+main = do
+  args <- getArgs
+  case parseArgs args of
+    Left a  -> exitError a
+    Right a -> printBoard $ board (fst a) (snd a)
+
 rugChar rug
   | (is_explored rug) && (is_dust rug)      = 'X'
   | (is_explored rug) && (not $ is_dust rug)  = ' '
@@ -28,12 +34,6 @@ rugChar rug
 
 printBoard board =
     putStrLn $ unlines $ map (\row -> map rugChar row) board
-
-main = do
-  args <- getArgs
-  case parseArgs args of
-    Left a  -> exitError a
-    Right a -> printBoard $ board 10 10
 
 board :: Int -> Int -> Board
 board size num_bombs = replicate size $ replicate size $ Rug False False
