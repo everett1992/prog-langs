@@ -3,6 +3,7 @@
 all: dustsweeper
 
 run: dustsweeper
+	@echo "Running dustsweeper..."
 	./dustsweeper 10 10
 
 dustsweeper: dustsweeper.hs
