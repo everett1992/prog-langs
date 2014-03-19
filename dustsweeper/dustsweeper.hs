@@ -10,6 +10,9 @@
 
 module Main (main) where
 
+import Data.Random.RVar
+import Data.Random.Extras
+import Data.Random.Source.DevRandom
 import System.Exit
 import System.Environment
 import Text.Read
@@ -45,7 +48,18 @@ print_board board =
     putStrLn $ unlines $ map (\row -> map rug_char row) board
 
 board :: Int -> Int -> Board
-board size num_dusts = replicate size $ replicate size $ Rug False 0
+board size num_dusts = empty_board size
+
+empty_board :: Int -> Board
+empty_board size = replicate size $ replicate size $ Rug False 0
+
+-- rand_locs :: Int -> Int -> [(Int, Int)]
+rand_locs size num_dusts =
+  runRvar (sample num_dusts $ points size) DevRandom
+
+points :: Int -> [(Int, Int)]
+points size =
+   [ (a,b) | a <- [0..size-1], b <- [0..size-1] ]
 
 -- Returns Either a tuple of (size, num_dusts) or an error string.
 parse_args :: [String] -> Either String (Int,Int)
