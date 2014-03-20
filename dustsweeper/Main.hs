@@ -24,13 +24,50 @@ data Rug = Rug { isExplored :: Bool, dusts :: Int }
 
 type Board = [[Rug]]
 type Point = (Int,Int)
+type Player = String
 
 
 main = do
   args <- getArgs
   case parseArgs args of
     Left a  -> exitError a
-    Right a -> printBoard $ board (fst a) (snd a)
+    Right a -> playGame ["Player 1", "Player 2"] (newBoard (fst a) (snd a))
+
+--playGame :: [Player] -> Int -> Int -> String
+playGame players board = do
+  printBoard $ board
+  prompt players board
+
+prompt players board = do
+  putStrLn $ (head players) ++ "> "
+  input <- getLine
+  case parseInput (words input) of
+    Left a -> reprompt players board a
+    Right a -> playGame (tail players ++ [head players]) (explore a board)
+
+reprompt players board message = do
+  putStrLn message
+  prompt players board
+
+-- Returns Either a tuple of (x, y) or an error string.
+parseInput :: [String] -> Either String Point
+parseInput input
+  | length input /= 2 = Left $ "Wrong number of inputs, needs X Y"
+  | otherwise = case (readMaybe $ input !! 0, readMaybe $ input !! 1) of
+    (Nothing,_)      -> Left $ "X should to be an Int, but was '" ++ input !! 0 ++ "'."
+    (_,Nothing)      -> Left $ "Y should to be an Int, but was '" ++ input !! 1 ++ "'."
+    (_,Nothing)      -> Left $ ""
+    (Just a, Just b) -> Right (a,b)
+
+explore :: Point -> Board -> Board
+explore point board =
+  updateBoardAt point (\d -> d { isExplored = True }) board
+
+
+-- Creates a random s x s board with n dusts
+newBoard :: Int -> Int -> Board
+newBoard s n =
+  setDusts (fst $ randPoints s n (mkStdGen 10)) (emptyBoard s)
 
 
 isDust :: Rug -> Bool
@@ -43,8 +80,8 @@ isDust rug
 rugChar :: Rug -> Char
 rugChar rug
   | (isExplored rug) = case (dusts rug) of num
-                                            | num == (-1)       -> 'X'
-                                            | num == 0           -> ' '
+                                            | num == (-1) -> 'X'
+                                            | num == 0    -> ' '
                                             | otherwise   -> head $ show num
   | otherwise = '░'
 
@@ -53,12 +90,6 @@ rugChar rug
 printBoard :: Board -> IO ()
 printBoard board =
     putStrLn $ unlines $ map (\row -> map rugChar row) board
-
-
--- Creates a random s x s board with n dusts
-board :: Int -> Int -> Board
-board s n =
-  setDusts (fst $ randPoints s n (mkStdGen 10)) (emptyBoard s)
 
 
 -- Returns a board s x s board of unexploored non dust Rugs
@@ -95,7 +126,7 @@ points s = [ (a,b) | a <- [0..s-1], b <- [0..s-1] ]
 
 
 -- Returns Either a tuple of (size, numDusts) or an error string.
-parseArgs :: [String] -> Either String (Int,Int)
+parseArgs :: [String] -> Either String (Int, Int)
 parseArgs args
   | length args /= 2 = Left $ "Wrong number of args: " ++ show (length args) ++ " of 2"
   | otherwise = case (readMaybe $ args !! 0, readMaybe $ args !! 1) of
