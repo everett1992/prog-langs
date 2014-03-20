@@ -8,7 +8,7 @@
 -- If it's a bomb the inactive player wins         |
 -- Swap active and inactive players   -------------+
 
-module Main (main) where
+module Dustsweeper (main) where
 
 import Data.Random.RVar
 import Data.Random.Extras
@@ -19,51 +19,53 @@ import Text.Read
 import Data.Maybe
 import Data.List
 
-data Rug = Rug { is_explored :: Bool, dusts :: Int }
+data Rug = Rug { isExplored :: Bool, dusts :: Int }
 
 type Board = [[Rug]]
 
 
 main = do
+  randLocs 10 10
   args <- getArgs
-  case parse_args args of
-    Left a  -> exit_error a
-    Right a -> print_board $ board (fst a) (snd a)
+  case parseArgs args of
+    Left a  -> exitError a
+    Right a -> printBoard $ board (fst a) (snd a)
 
-is_dust :: Rug -> Bool
-is_dust rug
+isDust :: Rug -> Bool
+isDust rug
   | dusts rug == -1 = True
   | otherwise = False
 
 -- Converts a Rug to a char
-rug_char :: Rug -> Char
-rug_char rug
-  | (is_explored rug) = case (dusts rug) of num
+rugChar :: Rug -> Char
+rugChar rug
+  | (isExplored rug) = case (dusts rug) of num
                                               | num == (-1)       -> 'X'
                                               | num == 0           -> ' '
                                               | otherwise   -> head $ show num
   | otherwise = '░'
 
-print_board board =
-    putStrLn $ unlines $ map (\row -> map rug_char row) board
+printBoard board =
+    putStrLn $ unlines $ map (\row -> map rugChar row) board
 
 board :: Int -> Int -> Board
-board size num_dusts = empty_board size
+board size numDusts = emptyBoard size
 
-empty_board :: Int -> Board
-empty_board size = replicate size $ replicate size $ Rug False 0
+emptyBoard :: Int -> Board
+emptyBoard size = replicate size $ replicate size $ Rug False 0
 
--- rand_locs :: Int -> Int -> [(Int, Int)]
-rand_locs size num_dusts =
-  runRvar (sample num_dusts $ points size) DevRandom
+--randLocs :: Int -> Int -> [(Int, Int)]
+randLocs size numDusts = do
+  a <- runRVar (sample numDusts $ points size) DevRandom
+  return a
 
 points :: Int -> [(Int, Int)]
 points size =
    [ (a,b) | a <- [0..size-1], b <- [0..size-1] ]
 
--- Returns Either a tuple of (size, num_dusts) or an error string.
-parse_args :: [String] -> Either String (Int,Int)
-parse_args args
+-- Returns Either a tuple of (size, numDusts) or an error string.
+parseArgs :: [String] -> Either String (Int,Int)
+parseArgs args
   | length args /= 2 = Left $ "Wrong number of args: " ++ show (length args) ++ " of 2"
   | otherwise = case (readMaybe $ args !! 0, readMaybe $ args !! 1) of
     (Nothing,_)      -> Left $ "Invalid Size was " ++ args !! 0 ++ " needs Int."
@@ -71,13 +73,13 @@ parse_args args
     (Just a, Just b) -> Right (a,b)
 
 -- Print basic usage instructions
-put_usage = do
+putUsage = do
   progName <- getProgName
-  putStrLn $ "Usage: " ++ progName ++ " size:Int num_dusts:Int"
+  putStrLn $ "Usage: " ++ progName ++ " size:Int numDusts:Int"
 
 -- Print error msg, usage, and exit with a nonzero exit status
-exit_error msg = do
+exitError msg = do
   putStrLn msg
-  put_usage
+  putUsage
   exitFailure
 
