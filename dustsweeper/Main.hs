@@ -10,9 +10,10 @@
 
 module Main (main) where
 
+import Data.Random (sampleState)
 import Data.Random.RVar
 import Data.Random.Extras
-import Data.Random.Source.DevRandom
+import Data.Random.Source.StdGen
 import System.Exit
 import System.Environment
 import Text.Read
@@ -31,10 +32,12 @@ main = do
     Left a  -> exitError a
     Right a -> printBoard $ board (fst a) (snd a)
 
+
 isDust :: Rug -> Bool
 isDust rug
   | dusts rug == -1 = True
   | otherwise = False
+
 
 -- Converts a Rug to a char
 rugChar :: Rug -> Char
@@ -45,19 +48,29 @@ rugChar rug
                                             | otherwise   -> head $ show num
   | otherwise = '░'
 
+
+-- Prints the board
+printBoard :: Board -> IO ()
 printBoard board =
     putStrLn $ unlines $ map (\row -> map rugChar row) board
+
 
 -- Creates a random s x s board with n dusts
 board :: Int -> Int -> Board
 board s n =
-  emptyBoard s
-  --setDusts (randPoints s n) (emptyBoard s)
+  setDusts (fst $ randPoints s n (mkStdGen 10)) (emptyBoard s)
+
+
+-- Returns a board s x s board of unexploored non dust Rugs
+emptyBoard :: Int -> Board
+emptyBoard s = replicate s $ replicate s $ Rug False 0
+
 
 -- Set the passed points in the board to dusts ( does not mark neighbors)
 setDusts :: [Point] -> Board -> Board
 setDusts points board =
   foldr (\p -> updateBoardAt p (\d -> d { dusts = (-1) })) board points
+
 
 -- Call the function u with the rug at x, y, returning the 
 -- board with the updated rug.
@@ -65,21 +78,21 @@ updateBoardAt :: Point -> (Rug -> Rug) -> Board -> Board
 updateBoardAt p f b =
   updateAt (fst p) (updateAt (snd p) f) b
 
+
 updateAt :: Int -> (a -> a) -> [a] -> [a]
 updateAt n f xs =
   take n xs ++ [f (xs !! n)] ++ drop (n + 1) xs
 
 
--- Returns a board s x s board of unexploored non dust Rugs
-emptyBoard :: Int -> Board
-emptyBoard s = replicate s $ replicate s $ Rug False 0
-
--- randPoints :: Int -> Int -> [(Int, Int)]
+-- Selects n random points from the s x s grid
+--randPoints :: Int -> Int -> [Point]
 randPoints s n = do
-  runRVar (sample n $ points s) DevRandom
+  sampleState (sample n $ points s) :: StdGen -> ([Point], StdGen)
+
 
 points :: Int -> [Point]
 points s = [ (a,b) | a <- [0..s-1], b <- [0..s-1] ]
+
 
 -- Returns Either a tuple of (size, numDusts) or an error string.
 parseArgs :: [String] -> Either String (Int,Int)
@@ -90,10 +103,12 @@ parseArgs args
     (_,Nothing)      -> Left $ "Invalid number of dusts was "  ++ args !! 1 ++ " needs Int."
     (Just a, Just b) -> Right (a,b)
 
+
 -- Print basic usage instructions
 putUsage = do
   progName <- getProgName
   putStrLn $ "Usage: " ++ progName ++ " size:Int numDusts:Int"
+
 
 -- Print error msg, usage, and exit with a nonzero exit status
 exitError msg = do
