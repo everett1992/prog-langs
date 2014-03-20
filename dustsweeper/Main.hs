@@ -22,6 +22,7 @@ import Data.List
 data Rug = Rug { isExplored :: Bool, dusts :: Int }
 
 type Board = [[Rug]]
+type Point = (Int,Int)
 
 
 main = do
@@ -51,12 +52,18 @@ printBoard board =
 board :: Int -> Int -> Board
 board s n =
   emptyBoard s
+  --setDusts (randPoints s n) (emptyBoard s)
+
+-- Set the passed points in the board to dusts ( does not mark neighbors)
+setDusts :: [Point] -> Board -> Board
+setDusts points board =
+  foldr (\p -> updateBoardAt p (\d -> d { dusts = (-1) })) board points
 
 -- Call the function u with the rug at x, y, returning the 
 -- board with the updated rug.
-updateBoardAt :: Int -> Int -> (Rug -> Rug) -> Board -> Board
-updateBoardAt x y f b =
-  updateAt x (updateAt y f) b
+updateBoardAt :: Point -> (Rug -> Rug) -> Board -> Board
+updateBoardAt p f b =
+  updateAt (fst p) (updateAt (snd p) f) b
 
 updateAt :: Int -> (a -> a) -> [a] -> [a]
 updateAt n f xs =
@@ -71,9 +78,8 @@ emptyBoard s = replicate s $ replicate s $ Rug False 0
 randPoints s n = do
   runRVar (sample n $ points s) DevRandom
 
-points :: Int -> [(Int, Int)]
-points s =
-   [ (a,b) | a <- [0..s-1], b <- [0..s-1] ]
+points :: Int -> [Point]
+points s = [ (a,b) | a <- [0..s-1], b <- [0..s-1] ]
 
 -- Returns Either a tuple of (size, numDusts) or an error string.
 parseArgs :: [String] -> Either String (Int,Int)
