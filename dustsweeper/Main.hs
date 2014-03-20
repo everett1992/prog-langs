@@ -39,28 +39,41 @@ isDust rug
 rugChar :: Rug -> Char
 rugChar rug
   | (isExplored rug) = case (dusts rug) of num
-                                              | num == (-1)       -> 'X'
-                                              | num == 0           -> ' '
-                                              | otherwise   -> head $ show num
+                                            | num == (-1)       -> 'X'
+                                            | num == 0           -> ' '
+                                            | otherwise   -> head $ show num
   | otherwise = '░'
 
 printBoard board =
     putStrLn $ unlines $ map (\row -> map rugChar row) board
 
+-- Creates a random s x s board with n dusts
 board :: Int -> Int -> Board
-board size numDusts =
-  emptyBoard size
+board s n =
+  emptyBoard s
 
+-- Call the function u with the rug at x, y, returning the 
+-- board with the updated rug.
+updateBoardAt :: Int -> Int -> (Rug -> Rug) -> Board -> Board
+updateBoardAt x y f b =
+  updateAt x (updateAt y f) b
+
+updateAt :: Int -> (a -> a) -> [a] -> [a]
+updateAt n f xs =
+  take n xs ++ [f (xs !! n)] ++ drop (n + 1) xs
+
+
+-- Returns a board s x s board of unexploored non dust Rugs
 emptyBoard :: Int -> Board
-emptyBoard size = replicate size $ replicate size $ Rug False 0
+emptyBoard s = replicate s $ replicate s $ Rug False 0
 
--- randLocs :: Int -> Int -> [(Int, Int)]
-randLocs size numDusts = do
-  runRVar (sample numDusts $ points size) DevRandom
+-- randPoints :: Int -> Int -> [(Int, Int)]
+randPoints s n = do
+  runRVar (sample n $ points s) DevRandom
 
 points :: Int -> [(Int, Int)]
-points size =
-   [ (a,b) | a <- [0..size-1], b <- [0..size-1] ]
+points s =
+   [ (a,b) | a <- [0..s-1], b <- [0..s-1] ]
 
 -- Returns Either a tuple of (size, numDusts) or an error string.
 parseArgs :: [String] -> Either String (Int,Int)
