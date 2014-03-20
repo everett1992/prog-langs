@@ -1,15 +1,15 @@
 .PHONY: all clean run
 
-all: Dustsweeper
+all: Main
 
-run: Dustsweeper
-	@echo "Running Dustsweeper..."
-	./Dustsweeper 10 10
+run: Main
+	@echo "Running Main..."
+	./Main 10 10
 
-Dustsweeper: Dustsweeper.hs
+Main: Main.hs
 	@echo "Compiling..."
-	ghc Dustsweeper.hs
+	ghc Main.hs
 
 clean:
-	rm Dustsweeper Dustsweeper.hi Dustsweeper.o
+	rm Main Main.hi Main.o
 

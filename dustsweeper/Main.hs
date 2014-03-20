@@ -8,7 +8,7 @@
 -- If it's a bomb the inactive player wins         |
 -- Swap active and inactive players   -------------+
 
-module Dustsweeper (main) where
+module Main (main) where
 
 import Data.Random.RVar
 import Data.Random.Extras
@@ -25,7 +25,6 @@ type Board = [[Rug]]
 
 
 main = do
-  randLocs 10 10
   args <- getArgs
   case parseArgs args of
     Left a  -> exitError a
@@ -49,15 +48,15 @@ printBoard board =
     putStrLn $ unlines $ map (\row -> map rugChar row) board
 
 board :: Int -> Int -> Board
-board size numDusts = emptyBoard size
+board size numDusts =
+  emptyBoard size
 
 emptyBoard :: Int -> Board
 emptyBoard size = replicate size $ replicate size $ Rug False 0
 
---randLocs :: Int -> Int -> [(Int, Int)]
+-- randLocs :: Int -> Int -> [(Int, Int)]
 randLocs size numDusts = do
-  a <- runRVar (sample numDusts $ points size) DevRandom
-  return a
+  runRVar (sample numDusts $ points size) DevRandom
 
 points :: Int -> [(Int, Int)]
 points size =
