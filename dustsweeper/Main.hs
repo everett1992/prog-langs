@@ -31,7 +31,7 @@ main = do
   args <- getArgs
   case parseArgs args of
     Left a  -> exitError a
-    Right a -> playGame ["Player 1", "Player 2"] (newBoard (fst a) (snd a))
+    Right a -> newBoard (fst a) (snd a) >>= playGame ["Player 1", "Player 2"]
 
 --playGame :: [Player] -> Int -> Int -> String
 playGame players board = do
@@ -65,9 +65,10 @@ explore point board =
 
 
 -- Creates a random s x s board with n dusts
-newBoard :: Int -> Int -> Board
-newBoard s n =
-  setDusts (fst $ randPoints s n (mkStdGen 10)) (emptyBoard s)
+newBoard :: Int -> Int -> IO Board
+newBoard s n = do
+  gen <- newStdGen
+  return $ setDusts (fst $ randPoints s n (gen)) (emptyBoard s)
 
 
 isDust :: Rug -> Bool
@@ -146,4 +147,3 @@ exitError msg = do
   putStrLn msg
   putUsage
   exitFailure
-
