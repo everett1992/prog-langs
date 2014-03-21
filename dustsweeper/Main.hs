@@ -41,7 +41,7 @@ playGame players board = do
 prompt players board = do
   putStrLn $ (head players) ++ "> "
   input <- getLine
-  case parsePoint (words input) of
+  case parsePoint board (words input) of
     Left a -> reprompt players board a
     Right a -> playGame (tail players ++ [head players]) (explore a board)
 
@@ -83,6 +83,9 @@ updateBoardAt :: Point -> (Rug -> Rug) -> Board -> Board
 updateBoardAt p f b =
   updateAt (fst p) (updateAt (snd p) f) b
 
+rugAt :: Board -> Int -> Int -> Rug
+rugAt board x y = (board !! x) !! y
+
 
 -- Selects n random points from the s x s grid
 randPoints :: Int -> Int -> (StdGen -> ([Point], StdGen))
@@ -95,13 +98,17 @@ randPoints s n = do
 
 
 -- Returns Either the inputed Point or an error string if input is invalid.
-parsePoint :: [String] -> Either String Point
-parsePoint input
+parsePoint :: Board -> [String] -> Either String Point
+parsePoint board input
   | length input /= 2 = Left $ "Wrong number of inputs, needs X Y"
   | otherwise = case (readMaybe $ input !! 0, readMaybe $ input !! 1) of
     (Nothing,_)      -> Left $ "X should to be an Int, but was '" ++ input !! 0 ++ "'."
     (_,Nothing)      -> Left $ "Y should to be an Int, but was '" ++ input !! 1 ++ "'."
-    (Just a, Just b) -> Right (a,b)
+    (Just x, Just y) -> case (x,y) of point
+                                        | x < 0 || x >= length board   -> Left $ "X must be within 0 and " ++ show (length board - 1) ++ " but was " ++ show x ++ "."
+                                        | y < 0 || y >= length board   -> Left $ "Y must be within 0 and " ++ show (length board - 1) ++ " but was " ++ show y ++ "."
+                                        | isExplored (rugAt board x y) -> Left $ "Rug at (" ++ show x ++ ", " ++ show y ++ ") is already explored."
+                                        | otherwise                    -> Right (x,y)
 
 
 -- Returns Either a tuple of (size, numDusts) or an error string.
