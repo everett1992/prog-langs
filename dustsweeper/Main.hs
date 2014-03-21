@@ -10,13 +10,10 @@
 
 module Main (main) where
 
-import Data.Random (sampleState)
-import Data.Random.RVar
-import Data.Random.Extras
-import Data.Random.Source.StdGen
 import System.IO
 import System.Exit
 import System.Environment
+import System.Random
 import Text.Read
 import Data.Maybe
 import Data.List
@@ -65,9 +62,9 @@ explore p b = updateBoardAt p (\d -> d { isExplored = True }) b
 -- Creates a random s x s board with n dusts
 newBoard :: Int -> Int -> IO Board
 newBoard s n = do
-  gen <- newStdGen
-  let points = (fst $ randPoints s n (gen))
-  return $ setHints points $ setDusts points (emptyBoard s)
+  gen <- getStdGen
+  let points = randPoints s n gen
+  return $ setHints points $ setDusts (emptyBoard s) points
 
 
 -- Returns a board size x size Board of unexplored non dust Rugs
@@ -76,13 +73,13 @@ emptyBoard size = replicate size (replicate size emptyRug)
 
 
 -- Set the passed points in the board to dusts (does not mark neighbors)
-setDusts :: [Point] -> Board -> Board
-setDusts points board =
+setDusts :: Board -> [Point] -> Board
+setDusts board points =
   foldr (\p -> updateBoardAt p (\d -> d { isDust = True })) board points
 
 
 -- Set the passed points in the board to dusts (does not mark neighbors)
--- setHints :: [Point] -> Board -> Board
+setHints :: [Point] -> Board -> Board
 setHints points board =
   foldr (\p -> updateBoardAt p (\d -> d { hint = succ (hint d) }) ) board (concat $ map (neighboringPoints board) points)
 
@@ -99,11 +96,11 @@ neighboringPoints :: Board -> Point -> [Point]
 neighboringPoints b (x,y) = [(x',y') | x' <- [x-1..x+1], y' <- [y-1..y+1], x' /= x || y' /= y, x' >= 0, x' < length b, y' >= 0, y' < length b  ]
 
 
--- Selects n random points from the s x s grid
-randPoints :: Int -> Int -> (StdGen -> ([Point], StdGen))
-randPoints s n = do
-  let points = [ (a,b) | a <- [0..s-1], b <- [0..s-1] ]
-  sampleState (sample n $ points) :: StdGen -> ([Point], StdGen)
+randPoints :: RandomGen g => Int -> Int -> g -> [Point]
+randPoints s n g = zip xs ys
+    where
+      xs = take n (randomRs (0, s-1) g)
+      ys = take n $ drop n $ randomRs (0, s-1) g
 
 
 -- Input Parseing Functions
@@ -166,14 +163,10 @@ hintChar hint
 -- Prints the board
 printBoard :: Board -> IO ()
 printBoard board =
-    putStrLn $ unlines $ map (\row -> map rugChar row) board
-
-
+    putStrLn $ unlines $ map (map rugChar) board
 -- Utility Functions
 
 -- Return a new list with the value at n replaced with the value f(n)
 updateAt :: Int -> (a -> a) -> [a] -> [a]
 updateAt n f xs =
   take n xs ++ [f (xs !! n)] ++ drop (n + 1) xs
-
-
