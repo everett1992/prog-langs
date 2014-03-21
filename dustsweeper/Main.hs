@@ -14,6 +14,7 @@ import Data.Random (sampleState)
 import Data.Random.RVar
 import Data.Random.Extras
 import Data.Random.Source.StdGen
+import System.IO
 import System.Exit
 import System.Environment
 import Text.Read
@@ -43,7 +44,8 @@ playGame players board = do
 
 -- Type not finalized
 prompt players board = do
-  putStrLn $ (head players) ++ "> "
+  putStr $ (head players) ++ "> "
+  hFlush stdout -- Ensure putStr is outputted
   input <- getLine
   case parsePoint board (words input) of
     Left a -> reprompt players board a
