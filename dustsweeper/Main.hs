@@ -20,11 +20,14 @@ import Text.Read
 import Data.Maybe
 import Data.List
 
-data Rug = Rug { isExplored :: Bool, dusts :: Int }
+data Rug = Rug { isExplored :: Bool, isDust :: Bool, hint :: Int}
 
 type Board = [[Rug]]
 type Point = (Int,Int)
 type Player = String
+
+-- Eytracted for debugging, this is the rug that the board is initialized to.
+emptyRug = Rug False False 0
 
 
 main = do
@@ -33,11 +36,12 @@ main = do
     Left a  -> exitError a
     Right a -> newBoard (fst a) (snd a) >>= playGame ["Player 1", "Player 2"]
 
---playGame :: [Player] -> Int -> Int -> String
+-- Type not finalized
 playGame players board = do
   printBoard $ board
   prompt players board
 
+-- Type not finalized
 prompt players board = do
   putStrLn $ (head players) ++ "> "
   input <- getLine
@@ -45,6 +49,7 @@ prompt players board = do
     Left a -> reprompt players board a
     Right a -> playGame (tail players ++ [head players]) (explore a board)
 
+-- Type not finalized
 reprompt players board message = do
   putStrLn message
   prompt players board
@@ -59,23 +64,25 @@ explore p b = updateBoardAt p (\d -> d { isExplored = True }) b
 newBoard :: Int -> Int -> IO Board
 newBoard s n = do
   gen <- newStdGen
-  return $ setDusts (fst $ randPoints s n (gen)) (emptyBoard s)
-
-
--- Returns ture i the Rug r is a dust
-isDust :: Rug -> Bool
-isDust rug = dusts rug == (-1)
+  let points = (fst $ randPoints s n (gen))
+  return $ setHints points $ setDusts points (emptyBoard s)
 
 
 -- Returns a board size x size Board of unexplored non dust Rugs
 emptyBoard :: Int -> Board
-emptyBoard size = replicate size (replicate size (Rug False 0))
+emptyBoard size = replicate size (replicate size emptyRug)
 
 
 -- Set the passed points in the board to dusts (does not mark neighbors)
 setDusts :: [Point] -> Board -> Board
 setDusts points board =
-  foldr (\p -> updateBoardAt p (\d -> d { dusts = (-1) })) board points
+  foldr (\p -> updateBoardAt p (\d -> d { isDust = True })) board points
+
+
+-- Set the passed points in the board to dusts (does not mark neighbors)
+-- setHints :: [Point] -> Board -> Board
+setHints points board =
+  foldr (\p -> updateBoardAt p (\d -> d { hint = succ (hint d) }) ) board (concat $ map (neighboringPoints board) points)
 
 
 -- Return a new Board with the Rug r at point p  replaced by rug f(r)
@@ -85,6 +92,9 @@ updateBoardAt p f b =
 
 rugAt :: Board -> Int -> Int -> Rug
 rugAt board x y = (board !! x) !! y
+
+neighboringPoints :: Board -> Point -> [Point]
+neighboringPoints b (x,y) = [(x',y') | x' <- [x-1..x+1], y' <- [y-1..y+1], x' /= x || y' /= y, x' >= 0, x' < length b, y' >= 0, y' < length b  ]
 
 
 -- Selects n random points from the s x s grid
@@ -140,11 +150,15 @@ exitError msg = do
 -- Converts a Rug to a char
 rugChar :: Rug -> Char
 rugChar rug
-  | (isExplored rug) = case (dusts rug) of num
-                                            | num == (-1) -> 'X'
-                                            | num == 0    -> ' '
-                                            | otherwise   -> head $ show num
+  | isExplored rug && isDust rug  = 'X'
+  | isExplored rug && not (isDust rug) = hintChar $ hint rug
   | otherwise = '░'
+
+hintChar :: Int -> Char
+hintChar hint
+  | hint == 0 = ' '
+  | otherwise = head $ show hint
+
 
 
 -- Prints the board
