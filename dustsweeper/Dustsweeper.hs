@@ -1,13 +1,7 @@
--- Read board size n from command line args
--- Read number of mines m from command line args
--- Generate n x n board  with m mines
-
--- Display the board                        <------+
--- Player inputs row (x) and column (y) from stdin |
--- Reveil space x,y in grid                        |
--- If it's a bomb the inactive player wins         |
--- Swap active and inactive players   -------------+
-
+{- Programming Languages                                      C. Everett -}
+{- Assignment 4                                                     TCNJ -}
+{- Haskell minesweeper clone                                             -}
+{- Dependancies: none                                                    -}
 module Main (main) where
 
 import System.IO
@@ -18,21 +12,26 @@ import Text.Read
 import Data.Maybe
 import Data.List
 
+-- The basic rug type
 data Rug = Rug { isExplored :: Bool, isDust :: Bool, hint :: Int}
 
+-- A board is a list of lists of Rugs.
 type Board = [[Rug]]
 type Point = (Int,Int)
+-- The player type is an abstration of a string representing their name.
 type Player = String
 
--- Eytracted for debugging, this is the rug that the board is initialized to.
+-- Extracted here for debugging, change this value to change the default
+-- Rugs in a Board.
 emptyRug = Rug False False 0
 
 
 main = do
   args <- getArgs
+  gen <- getStdGen
   case parseBoardSize args of
     Left a  -> exitError a
-    Right a -> newBoard (fst a) (snd a) >>= playGame ["Player 1", "Player 2"]
+    Right (s,n) -> playGame ["Player 1", "Player 2"] (newBoard s n gen)
 
 -- Type not finalized
 playGame players board = do
@@ -59,29 +58,29 @@ explore :: Point -> Board -> Board
 explore p b = updateBoardAt p (\d -> d { isExplored = True }) b
 
 
--- Creates a random s x s board with n dusts
-newBoard :: Int -> Int -> IO Board
-newBoard s n = do
-  gen <- getStdGen
-  let points = randPoints s n gen
-  return $ setHints points $ setDusts (emptyBoard s) points
+-- Creates a random s by s board with n dusts
+newBoard :: Int -> Int -> StdGen -> Board
+newBoard s n g = setHints points $ setDusts points (emptyBoard s)
+    where points = randPoints s n g
 
 
--- Returns a board size x size Board of unexplored non dust Rugs
+-- Returns a size by size Board of unexplored non dust Rugs
 emptyBoard :: Int -> Board
 emptyBoard size = replicate size (replicate size emptyRug)
 
 
 -- Set the passed points in the board to dusts (does not mark neighbors)
-setDusts :: Board -> [Point] -> Board
-setDusts board points =
+setDusts :: [Point] -> Board -> Board
+setDusts points board =
   foldr (\p -> updateBoardAt p (\d -> d { isDust = True })) board points
 
 
--- Set the passed points in the board to dusts (does not mark neighbors)
+-- Increments the number of dusts in all Rugs neighboring Points
 setHints :: [Point] -> Board -> Board
-setHints points board =
-  foldr (\p -> updateBoardAt p (\d -> d { hint = succ (hint d) }) ) board (concat $ map (neighboringPoints board) points)
+setHints points board = foldr incDusts board incPoints
+  where
+    incDusts = \p -> updateBoardAt p (\d -> d { hint = succ (hint d) })
+    incPoints = concat $ map (neighboringPoints board) points
 
 
 -- Return a new Board with the Rug r at point p  replaced by rug f(r)
