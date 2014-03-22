@@ -75,12 +75,12 @@ setDusts points board =
   foldr (\p -> updateBoardAt p (\d -> d { isDust = True })) board points
 
 
--- Increments the number of dusts in all Rugs neighboring Points
+-- Increments the number of dusts in all Rugs adjacent Points
 setHints :: [Point] -> Board -> Board
 setHints points board = foldr incDusts board incPoints
   where
     incDusts = \p -> updateBoardAt p (\d -> d { hint = succ (hint d) })
-    incPoints = concat $ map (neighboringPoints board) points
+    incPoints = concat $ map (adjacentPoints board) points
 
 
 -- Return a new Board with the Rug r at point p  replaced by rug f(r)
@@ -88,13 +88,21 @@ updateBoardAt :: Point -> (Rug -> Rug) -> Board -> Board
 updateBoardAt p f b =
   updateAt (fst p) (updateAt (snd p) f) b
 
-rugAt :: Board -> Int -> Int -> Rug
-rugAt board x y = (board !! x) !! y
+-- The Rug from a Board at point `x`, `y`
+rugAt :: Board -> Point -> Rug
+rugAt board (x,y) = (board !! x) !! y
 
-neighboringPoints :: Board -> Point -> [Point]
-neighboringPoints b (x,y) = [(x',y') | x' <- [x-1..x+1], y' <- [y-1..y+1], x' /= x || y' /= y, x' >= 0, x' < length b, y' >= 0, y' < length b  ]
+-- List of points adjacent to the Point.
+adjacentPoints :: Board -> Point -> [Point]
+adjacentPoints b (x,y) = [(x',y') |
+   x' <- [x-1..x+1],
+   y' <- [y-1..y+1],
+   x' /= x || y' /= y,
+   x' >= 0, x' < length b,
+   y' >= 0, y' < length b  ]
 
 
+-- List of `n` random points inside a `s` by `s` grid
 randPoints :: RandomGen g => Int -> Int -> g -> [Point]
 randPoints s n g = take n $ nub $ zip xs ys
     where
@@ -105,27 +113,68 @@ randPoints s n g = take n $ nub $ zip xs ys
 -- Input Parseing Functions
 
 
+-- Error message to display when input cannot be parsed as Int.
+readErrorMsg :: String -> String -> String
+readErrorMsg var input = "Error parsing input: " ++ var
+   ++ " should to be an Int, but was '" ++ input ++ "'."
+
+-- Error message to display when input is out of bounds.
+boundsErrorMsg :: String -> Int -> Int -> Int -> String
+boundsErrorMsg var min max is = "Invalid move: " ++ var
+  ++ " must be within " ++ (show min) ++ " and " ++ (show max)
+   ++ " but was " ++ (show is) ++ "."
+
+exploredErrorMsg :: Point -> String
+exploredErrorMsg point = "Invalid move: " ++ show point
+  ++ ". Rug is already explored."
+
+
 -- Returns Either the inputed Point or an error string if input is invalid.
 parsePoint :: Board -> [String] -> Either String Point
 parsePoint board input
   | length input /= 2 = Left $ "Wrong number of inputs, needs X Y"
   | otherwise = case (readMaybe $ input !! 0, readMaybe $ input !! 1) of
-    (Nothing,_)      -> Left $ "X should to be an Int, but was '" ++ input !! 0 ++ "'."
-    (_,Nothing)      -> Left $ "Y should to be an Int, but was '" ++ input !! 1 ++ "'."
-    (Just x, Just y) -> case (x,y) of point
-                                        | x < 0 || x >= length board   -> Left $ "X must be within 0 and " ++ show (length board - 1) ++ " but was " ++ show x ++ "."
-                                        | y < 0 || y >= length board   -> Left $ "Y must be within 0 and " ++ show (length board - 1) ++ " but was " ++ show y ++ "."
-                                        | isExplored (rugAt board x y) -> Left $ "Rug at (" ++ show x ++ ", " ++ show y ++ ") is already explored."
-                                        | otherwise                    -> Right (x,y)
+    (Nothing,_)      -> Left $ readErrorMsg "X" (input !! 0)
+    (_,Nothing)      -> Left $ readErrorMsg "Y" (input !! 1)
+    (Just x, Just y) -> validPoint board (x,y)
 
+
+-- Checks that the move is unexplored, and within the bounds of the board.
+validPoint :: Board -> Point -> Either String Point
+validPoint board point = case checkBounds 0 (length board - 1) point of
+  Left a  -> Left a
+  Right a -> unexplored board a
+
+-- Checks that the move is unexplored.
+unexplored :: Board -> Point -> Either String Point
+unexplored board point
+  | isExplored (rugAt board point) = Left $ exploredErrorMsg point
+  | otherwise = Right point
+
+
+-- Checks that the move is with in the bounds of the board.
+checkBounds :: Int -> Int -> Point -> Either String Point
+checkBounds min max (x,y)
+  | x < min || x > max   = Left $ boundsErrorMsg "X" min max x
+  | y < min || y > max   = Left $ boundsErrorMsg "Y" min max y
+  | otherwise                    = Right (x,y)
+
+
+argLengthErrorMsg :: Int -> Int -> String
+argLengthErrorMsg needs is = "Wrong number of args: " ++ show is 
+  ++ " of " ++ show needs ++ "."
+
+intErrorMsg :: String -> String -> String
+intErrorMsg var is =
+  "Invalid " ++ var ++ " '"  ++ is ++ "' must be an Int."
 
 -- Returns Either a tuple of (size, numDusts) or an error string.
 parseBoardSize :: [String] -> Either String (Int, Int)
 parseBoardSize args
-  | length args /= 2 = Left $ "Wrong number of args: " ++ show (length args) ++ " of 2"
+  | length args /= 2 = Left $ argLengthErrorMsg 2 (length args)
   | otherwise = case (readMaybe $ args !! 0, readMaybe $ args !! 1) of
-    (Nothing,_)      -> Left $ "Invalid Size was " ++ args !! 0 ++ " needs Int."
-    (_,Nothing)      -> Left $ "Invalid number of dusts was "  ++ args !! 1 ++ " needs Int."
+    (Nothing,_)      -> Left $ intErrorMsg "size" (args !! 0)
+    (_,Nothing)      -> Left $ intErrorMsg "number of dusts " (args !! 0)
     (Just a, Just b) -> Right (a,b)
 
 
@@ -136,7 +185,7 @@ parseBoardSize args
 putUsage :: IO ()
 putUsage = do
   progName <- getProgName
-  putStrLn $ "Usage: " ++ progName ++ " size:Int numDusts:Int"
+  putStrLn $ "Usage: " ++ progName ++ " size numDusts"
 
 
 -- Print error msg, usage, and exit with a nonzero exit status
