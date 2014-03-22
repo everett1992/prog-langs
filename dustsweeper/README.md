@@ -16,7 +16,7 @@ A terminal minesweeper clone written in Haskell.
 
 ## Complilation
 
-Compile Main.hs with the included makefile by running
+Compile Dustsweeper.hs with the included makefile by running
 
 ```
 $ make
@@ -25,12 +25,12 @@ $ make
 or using ghc with
 
 ```
-$ ghc Main.hs
+$ ghc Dustsweeper.hs
 ```
 
 ## Usage
 
-Run the program with `$ make run `, or to play with a different sized board `$ ./Main s n` where
+Run the program with `$ make run `, or to play with a different sized board `$ ./Dustsweeper s n` where
 `s` is the width of the square board, and `n` is the number of bombs.
 
 
