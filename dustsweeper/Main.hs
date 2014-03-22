@@ -97,10 +97,10 @@ neighboringPoints b (x,y) = [(x',y') | x' <- [x-1..x+1], y' <- [y-1..y+1], x' /=
 
 
 randPoints :: RandomGen g => Int -> Int -> g -> [Point]
-randPoints s n g = zip xs ys
+randPoints s n g = take n $ nub $ zip xs ys
     where
-      xs = take n (randomRs (0, s-1) g)
-      ys = take n $ drop n $ randomRs (0, s-1) g
+      xs = filter (\a -> a `mod` 2 == 0) (randomRs (0, s-1) g)
+      ys = filter (\a -> a `mod` 2 /= 0) (randomRs (0, s-1) g)
 
 
 -- Input Parseing Functions
