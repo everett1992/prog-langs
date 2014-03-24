@@ -21,6 +21,7 @@ type Board = [[Rug]]
 type Point = (Int,Int)
 -- The player type is an abstration of a string representing their name.
 type Player = String
+type Players = (Player, Player)
 
 type PointError = Either String Point
 
