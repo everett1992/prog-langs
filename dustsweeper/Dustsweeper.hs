@@ -11,6 +11,7 @@ import System.Random
 import Text.Read
 import Data.Maybe
 import Data.List
+import Data.Tuple
 
 -- The basic rug type
 data Rug = Rug { isExplored :: Bool, isDust :: Bool, hint :: Int}
@@ -31,21 +32,22 @@ main = do
   gen <- getStdGen
   case parseBoardSize args of
     Left a  -> exitError a
-    Right (s,n) -> playGame ["Player 1", "Player 2"] (newBoard s n gen)
+    Right (s,n) -> playGame ("Player 1", "Player 2") (newBoard s n gen)
 
--- Type not finalized
+-- Type not finalized, I don't know the final return type yet.
+-- playGame :: (Player, Player) -> Board -> a
 playGame players board = do
   printBoard $ board
   prompt players board
 
 -- Type not finalized
 prompt players board = do
-  putStr $ (head players) ++ "> "
+  putStr $ (fst players) ++ "> "
   hFlush stdout -- Ensure putStr is outputted
   input <- getLine
   case parsePoint board (words input) of
     Left a -> reprompt players board a
-    Right a -> playGame (tail players ++ [head players]) (explore a board)
+    Right a -> playGame (swap players) (explore a board)
 
 -- Type not finalized
 reprompt players board message = do
