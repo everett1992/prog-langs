@@ -22,6 +22,8 @@ type Point = (Int,Int)
 -- The player type is an abstration of a string representing their name.
 type Player = String
 
+type PointError = Either String Point
+
 -- Extracted here for debugging, change this value to change the default
 -- Rugs in a Board.
 emptyRug = Rug False False 0
@@ -132,7 +134,7 @@ exploredErrorMsg point = "Invalid move: " ++ show point
 
 
 -- Returns Either the inputed Point or an error string if input is invalid.
-parsePoint :: Board -> [String] -> Either String Point
+parsePoint :: Board -> [String] -> PointError
 parsePoint board input
   | length input /= 2 = Left $ "Wrong number of inputs, needs X Y"
   | otherwise = case (readMaybe $ input !! 0, readMaybe $ input !! 1) of
@@ -142,20 +144,20 @@ parsePoint board input
 
 
 -- Checks that the move is unexplored, and within the bounds of the board.
-validPoint :: Board -> Point -> Either String Point
+validPoint :: Board -> Point -> PointError
 validPoint board point = case checkBounds 0 (length board - 1) point of
   Left a  -> Left a
   Right a -> unexplored board a
 
 -- Checks that the move is unexplored.
-unexplored :: Board -> Point -> Either String Point
+unexplored :: Board -> Point -> PointError
 unexplored board point
   | isExplored (rugAt board point) = Left $ exploredErrorMsg point
   | otherwise = Right point
 
 
 -- Checks that the move is with in the bounds of the board.
-checkBounds :: Int -> Int -> Point -> Either String Point
+checkBounds :: Int -> Int -> Point -> PointError
 checkBounds min max (x,y)
   | x < min || x > max   = Left $ boundsErrorMsg "X" min max x
   | y < min || y > max   = Left $ boundsErrorMsg "Y" min max y
