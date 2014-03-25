@@ -102,15 +102,16 @@ explore p b = nb
   where
    nb = updateBoardAt p (\d -> d { isExplored = True }) b
 
+-- Fill any empty points adjacent to exposed points.
 floodExploredRugs :: Board -> Board
-floodExploredRugs b = case length (unexploredAdjacentNonDusts b) of
+floodExploredRugs b = case length (unexpAdjNonDusts b) of
   0 -> b
-  otherwise -> floodExploredRugs $ foldr explore b (unexploredAdjacentNonDusts b)
+  otherwise -> floodExploredRugs $ foldr explore b (unexpAdjNonDusts b)
 
 
 -- List of all non dust, non explored points next to explored points.
-unexploredAdjacentNonDusts :: Board -> [Point]
-unexploredAdjacentNonDusts b = filter
+unexpAdjNonDusts :: Board -> [Point]
+unexpAdjNonDusts b = filter
   (\p -> (not (isExplored (rugAt b p)) && not (isDust (rugAt b p))))
   (concat $ map (adjPoints b) (exploredNonHintPonts b))
 
