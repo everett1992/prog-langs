@@ -112,8 +112,13 @@ floodExploredRugs b = case length (unexploredAdjacentNonDusts b) of
 unexploredAdjacentNonDusts :: Board -> [Point]
 unexploredAdjacentNonDusts b = filter
   (\p -> (not (isExplored (rugAt b p)) && not (isDust (rugAt b p))))
-  (concat $ map (adjPoints b) (exploredPoints b))
+  (concat $ map (adjPoints b) (exploredNonHintPonts b))
 
+
+exploredNonHintPonts :: Board -> [Point]
+exploredNonHintPonts b = filter
+  (\p -> hint (rugAt b p) == 0)
+  (exploredPoints b)
 
 -- The Points of all explored rugs in the Board b
 exploredPoints :: Board -> [Point]
