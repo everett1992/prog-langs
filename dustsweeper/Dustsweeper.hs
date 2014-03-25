@@ -38,7 +38,9 @@ main = do
   gen <- getStdGen
   case parseBoardSize args of
     Left a  -> exitError a
-    Right (s,n) -> playGame ("Player 1", "Player 2") (newBoard s n gen) >>= announceWinner
+    Right (s,n) -> playGame players (newBoard s n gen) >>= announceWinner
+  where
+    players = ("Player 1", "Player 2")
 
 
 announceWinner :: (Player, Board) -> IO ()
@@ -51,28 +53,29 @@ playGame :: Players -> Board -> IO (Player, Board)
 playGame players board = do
   printBoard $ board
   point <- prompt (fst players) board
-  let next_board = (explore point board)
-  case state next_board of
-    Won  -> return ((fst players), next_board)
-    Lost -> return ((snd players), next_board)
-    Ongoing -> playGame (swap players) next_board
+  let nextBoard = (explore point board)
+  case state nextBoard of
+    Won  -> return ((fst players), nextBoard)
+    Lost -> return ((snd players), nextBoard)
+    Ongoing -> playGame (swap players) nextBoard
 
 
 -- The state of the passed board
 state :: Board -> State
 state board
-  | length (unexploredEmptyRugs board) == 0  = Won
-  | length (exploredDusts board) > 0         = Lost
-  | otherwise                                = Ongoing
+  | length (unexploredEmptyRugs rugs) == 0  = Won
+  | length (exploredDusts rugs) > 0         = Lost
+  | otherwise                               = Ongoing
+  where rugs = concat board
 
 
-exploredDusts :: Board -> [Rug]
+exploredDusts :: [Rug] -> [Rug]
 exploredDusts board =
-  filter (\a -> (isExplored a) && (isDust a)) (concat board)
+  filter (\a -> (isExplored a) && (isDust a)) board
 
-unexploredEmptyRugs :: Board -> [Rug]
+unexploredEmptyRugs :: [Rug] -> [Rug]
 unexploredEmptyRugs board =
-  filter (\a -> not (isExplored a) && not (isDust a)) (concat board)
+  filter (\a -> not (isExplored a) && not (isDust a)) board
 
 
 -- Ask for input, if it's invalid ask again,
