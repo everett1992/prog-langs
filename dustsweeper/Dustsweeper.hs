@@ -57,7 +57,7 @@ playGame players board = do
   case state nextBoard of
     Won  -> return ((fst players), nextBoard)
     Lost -> return ((snd players), nextBoard)
-    Ongoing -> playGame (swap players) nextBoard
+    Ongoing -> playGame (swap players) (floodExploredRugs nextBoard)
 
 
 -- The state of the passed board
@@ -98,7 +98,27 @@ reprompt player board message = do
 
 -- Returns a new Board with the Rug at Point p in Board b explored
 explore :: Point -> Board -> Board
-explore p b = updateBoardAt p (\d -> d { isExplored = True }) b
+explore p b = nb
+  where
+   nb = updateBoardAt p (\d -> d { isExplored = True }) b
+
+floodExploredRugs :: Board -> Board
+floodExploredRugs board =
+  foldr explore board (unexploredAdjacentNonDusts board)
+
+
+-- List of all non dust, non explored points next to explored points.
+unexploredAdjacentNonDusts :: Board -> [Point]
+unexploredAdjacentNonDusts b = filter
+  (\p -> (not (isExplored (rugAt b p)) && not (isDust (rugAt b p))))
+  (concat $ map (adjPoints b) (exploredPoints b))
+
+
+-- The Points of all explored rugs in the Board b
+exploredPoints :: Board -> [Point]
+exploredPoints b = filter
+  (\p -> isExplored (rugAt b p))
+  (points (length b))
 
 
 -- Creates a random s by s board with n dusts
@@ -123,7 +143,7 @@ setHints :: [Point] -> Board -> Board
 setHints points board = foldr incDusts board incPoints
   where
     incDusts = \p -> updateBoardAt p (\d -> d { hint = succ (hint d) })
-    incPoints = concat $ map (adjacentPoints board) points
+    incPoints = concat $ map (adjPoints board) points
 
 
 -- Return a new Board with the Rug r at point p  replaced by rug f(r)
@@ -136,14 +156,18 @@ rugAt :: Board -> Point -> Rug
 rugAt board (x,y) = (board !! x) !! y
 
 -- List of points adjacent to the Point.
-adjacentPoints :: Board -> Point -> [Point]
-adjacentPoints b (x,y) = [(x',y') |
+adjPoints :: Board -> Point -> [Point]
+adjPoints b (x,y) = [(x',y') |
    x' <- [x-1..x+1],
    y' <- [y-1..y+1],
    x' /= x || y' /= y,
    x' >= 0, x' < length b,
    y' >= 0, y' < length b  ]
 
+
+-- List of all points in `s` by `s` grid
+points :: Int -> [Point]
+points s = [ (x,y) | x <- [0..(s-1)], y <- [0..(s-1)] ]
 
 -- List of `n` random points inside a `s` by `s` grid
 randPoints :: RandomGen g => Int -> Int -> g -> [Point]
