@@ -41,21 +41,25 @@ main = do
 -- playGame :: (Player, Player) -> Board -> a
 playGame players board = do
   printBoard $ board
-  prompt players board
+  a <- prompt (fst players) board
+  playGame (swap players) (explore a board)
 
--- Type not finalized
-prompt players board = do
-  putStr $ (fst players) ++ "> "
+-- Ask for input, if it's invalid ask again,
+-- if it's valid return an IO Point.
+prompt :: Player -> Board -> IO Point
+prompt player board = do
+  putStr $ player ++ "> "
   hFlush stdout -- Ensure putStr is outputted
   input <- getLine
   case parsePoint board (words input) of
-    Left a -> reprompt players board a
-    Right a -> playGame (swap players) (explore a board)
+    Left a -> reprompt player board a
+    Right a -> return $ a
 
--- Type not finalized
-reprompt players board message = do
+-- Print an error message then ask for input again.
+reprompt :: Player -> Board -> String -> IO Point
+reprompt player board message = do
   putStrLn message
-  prompt players board
+  prompt player board
 
 
 -- Returns a new Board with the Rug at Point p in Board b explored
