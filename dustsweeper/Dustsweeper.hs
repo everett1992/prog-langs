@@ -16,6 +16,9 @@ import Data.Tuple
 -- The basic rug type
 data Rug = Rug { isExplored :: Bool, isDust :: Bool, hint :: Int}
 
+-- State of a board.
+data State = Won | Lost | Ongoing
+
 -- A board is a list of lists of Rugs.
 type Board = [[Rug]]
 type Point = (Int,Int)
@@ -35,14 +38,42 @@ main = do
   gen <- getStdGen
   case parseBoardSize args of
     Left a  -> exitError a
-    Right (s,n) -> playGame ("Player 1", "Player 2") (newBoard s n gen)
+    Right (s,n) -> playGame ("Player 1", "Player 2") (newBoard s n gen) >>= announceWinner
+
+
+announceWinner :: (Player, Board) -> IO ()
+announceWinner (winner, board) = do
+  printBoard board
+  putStrLn $ winner ++ " Wins!"
 
 -- Type not finalized, I don't know the final return type yet.
--- playGame :: (Player, Player) -> Board -> a
+playGame :: Players -> Board -> IO (Player, Board)
 playGame players board = do
   printBoard $ board
-  a <- prompt (fst players) board
-  playGame (swap players) (explore a board)
+  point <- prompt (fst players) board
+  let next_board = (explore point board)
+  case state next_board of
+    Won  -> return ((fst players), next_board)
+    Lost -> return ((snd players), next_board)
+    Ongoing -> playGame (swap players) next_board
+
+
+-- The state of the passed board
+state :: Board -> State
+state board
+  | length (unexploredEmptyRugs board) == 0  = Won
+  | length (exploredDusts board) > 0         = Lost
+  | otherwise                                = Ongoing
+
+
+exploredDusts :: Board -> [Rug]
+exploredDusts board =
+  filter (\a -> (isExplored a) && (isDust a)) (concat board)
+
+unexploredEmptyRugs :: Board -> [Rug]
+unexploredEmptyRugs board =
+  filter (\a -> not (isExplored a) && not (isDust a)) (concat board)
+
 
 -- Ask for input, if it's invalid ask again,
 -- if it's valid return an IO Point.
