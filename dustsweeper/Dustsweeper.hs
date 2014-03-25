@@ -103,8 +103,9 @@ explore p b = nb
    nb = updateBoardAt p (\d -> d { isExplored = True }) b
 
 floodExploredRugs :: Board -> Board
-floodExploredRugs board =
-  foldr explore board (unexploredAdjacentNonDusts board)
+floodExploredRugs b = case length (unexploredAdjacentNonDusts b) of
+  0 -> b
+  otherwise -> floodExploredRugs $ foldr explore b (unexploredAdjacentNonDusts b)
 
 
 -- List of all non dust, non explored points next to explored points.
