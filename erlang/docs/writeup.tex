@@ -1,0 +1,76 @@
+\documentclass[12pt]{article}
+\usepackage{fancyhdr}
+\usepackage{homework}
+\usepackage{listings}
+\usepackage[pdftex]{graphicx}
+\usepackage[small,compact]{titlesec}
+
+\newcommand{\inline}{\lstinline[basicstyle=\ttfamily]}
+
+\pagestyle{fancy}
+\lhead{Caleb Everett}
+\chead{writeup}
+\rhead{\today}
+\cfoot{\thepage}
+
+\begin{document}
+\section{Erlang Basics}
+\subsection{Explain the Erlang Type System}
+
+  Erlang is dynamically typed.
+
+\subsection{References cannot be defined by words starting with lowercase
+letters.}
+
+  Because someone thought it would be cool to have bare words, but only
+  for single words, starting with lowercase letters?
+
+\subsection{Difference between \inline{list} and \inline{tuple}?}
+
+  The size of a tuple is fixed, while lists can grow.
+
+\subsection{What are \inline{foreach}, \inline{filter}, \inline{map}, \inline{fold}?}
+
+\begin{description}
+  \item[foreach] -- Applies the function \inline{f} once to each
+  element in list \inline{l}.
+
+\item[filter] -- Returns an list of all values from list \inline{l}
+  for which the function \inline{f} returned true.
+
+\item[map] -- Same as \inline{foreach}, but it returns a list
+  of the result of \inline{f} for each element in \inline{l}.
+
+\item[foldl] -- Iterates through the list \inline{l}, calling
+  function \inline{f} once for each element. \inline{f} is called 
+  with two arguments, the element, and the return value of the previous
+  call to \inline{f} or the start value \inline{a}.
+\end{description}
+
+\section{Research Questions}
+
+\subsection{Erlang is known for its mantra ``Let it crash.''
+  What does this mean and how is Erlang designed to prefer
+  this method of maintenance?}
+
+  Instead of checking for all possible error states the program should be
+  architected to fail and crash when an invalid state is entered. Another
+  monitoring process should then restart or fix the failed process.
+  Erlang is designed for this mantra by focusing on multithreading, and
+  client server designs.
+
+\subsection{List three examples of the types of systems that are built using
+  Erlang. Do you believe that Erlang is a good choice for these systems?}
+
+  \begin{definition}
+  \item[Facebook] -- Realtime chat application.
+  \item[T-Mobile] -- SMS systems.
+  \item[Amazon] -- AWS database backend.
+\end{definition}
+
+Facebook's and T-Mobile's applications are obviously well fitted, Erlang
+was designed for telecommunications. Amazons choice of Erlang for their
+database system makes sense as well, Erlang is designed for realtime
+long running processes.
+
+\end{document}
