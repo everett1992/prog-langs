@@ -13,4 +13,5 @@ row_to_string(R) ->
 
 pascal(N) ->
   Rows = lists:map( fun(R) -> pascal_row(R) end, lists:seq(1, N)),
-  string:join(lists:map(fun(R) -> row_to_string(R) end ,Rows), "\n").
+  Data = string:join(lists:map(fun(R) -> row_to_string(R) end ,Rows), "\n"),
+  file:write_file("pascal.txt", io_lib:fwrite("~s\n", [Data])).

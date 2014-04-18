@@ -1,0 +1,55 @@
+Script started on Thu 17 Apr 2014 08:47:01 PM EDT
+[1m[7m%[27m[1m[0m                                                                                                                                                                       [0m[27m[24m[J[34m[35m~/workspace/prog-langs/erlang/src[36m(±master) [00m[36m»[00m [Keecho commands[1m [0m[0m[27m[24m[J[34m[35m~/workspace/prog-langs/erlang/src[36m(±master) [00m[34m∷ echo commands[K[13D[5C[0m[27m[24m[J[34m[35m~/workspace/prog-langs/erlang/src[36m(±master) [00m[36m»[00m  commands[K[9Dc commands[9Dca commands[9Dt commands[9D[0m[27m[24m[J[34m[35m~/workspace/prog-langs/erlang/src[36m(±master) [00m[36m»[00m erl
+[00mEshell V6.0  (abort with ^G)
+1> c(calc).
+{ok,calc}
+2> calc:exp(3,6).
+729.0
+3> calc:exp(4,0).
+1.0
+4> calc:exp(5,1).
+5.0
+5> c(basic_module).
+{ok,basic_module}
+6> basic_module:light_mixing(0,0,0).
+black
+7> basic_module:light_mixing(0,0,1).
+blue
+8> basic_module:light_mixing(0,1,0).
+green
+9> basic_module:light_mixing(0,1,1).
+cyan
+10> basic_module:light_mixing(1,0,0).
+red
+11> basic_module:light_mixing(1,0,1).
+yellow
+12> basic_module:light_mixing(1,1,0).
+magenta
+13> basic_module:light_mixing(1,1,1).
+white
+14> basic_module:is_palindrome("racecar").
+true
+15> basic_module:is_palindrome("kayak").
+true
+16> basic_module:is_palindrome("notapalindrome").
+false
+17> c(recursion).
+{ok,recursion}
+18> recursion:pascal(11).
+ok
+19> *** Terminating erlang (nonode@nohost)
+[1m[7m%[27m[1m[0m                                                                                                                                                                       [0m[27m[24m[J[34m[35m~/workspace/prog-langs/erlang/src[36m(±master) [00m[36m»[00m [Kccat pascal.txt[1m [0m[0m 
+[00m1
+1 1
+1 2 1
+1 3 3 1
+1 4 6 4 1
+1 5 10 10 5 1
+1 6 15 20 15 6 1
+1 7 21 35 35 21 7 1
+1 8 28 56 70 56 28 8 1
+1 9 36 84 126 126 84 36 9 1
+1 10 45 120 210 252 210 120 45 10 1
+[1m[7m%[27m[1m[0m                                                                                                                                                                       [0m[27m[24m[J[34m[35m~/workspace/prog-langs/erlang/src[36m(±master) [00m[36m»[00m [K
+
+Script done on Thu 17 Apr 2014 08:47:19 PM EDT
