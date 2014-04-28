@@ -1,4 +1,3 @@
-% vim: ft=prolog
 % Caleb Everett                                    The College of New Jersey
 % Programming Languages                                  Assignment 7 Prolog
 
@@ -32,3 +31,5 @@ buzy(Person) :- has_kids(Person).
 
 happy(Person) :- watching_tv(Person).
 happy(Person) :- married(Person, _), \+ no_sleep(Person).
+
+% vim: ft=prolog

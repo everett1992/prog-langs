@@ -1,0 +1,73 @@
+Script started on Mon 28 Apr 2014 05:02:55 PM EDT
+[1m[7m%[27m[1m[0m                                                                            [0m[27m[24m[J[34m[35m~/workspace/prog-langs/prolog[36m(±master) [00m[36m»[00m [Kp ggprolog
+[00mGNU Prolog 1.4.4 (64 bits)
+Compiled Apr 29 2013, 20:42:46 with gcc
+By Daniel Diaz
+Copyright (C) 1999-2013 Daniel Diaz
+| ?- [people][people].
+compiling /home/caleb/workspace/prog-langs/prolog/people.pl for byte code...
+/home/caleb/workspace/prog-langs/prolog/people.pl compiled, 35 lines read - 3250 bytes written, 15 ms
+
+(3 ms) yes
+| ?- happy(mar   M mary)(mary).
+
+no
+| ?- has_job(alex)(alex).
+
+no
+| ?- married(X)(X), happy(X)(X).
+uncaught exception: error(existence_error(procedure,married/1),top_level/0)
+| ?- married(X), happy(X).,), happy(X). ), happy(X).Y), happy(X).), happy(X).
+
+X = carl
+Y = mary
+
+yes
+| ?- married(X, Y), happy(X).), happy(X). _), happy(X).), happy(X).
+
+X = carl
+
+(1 ms) yes
+| ?- [map][map].
+compiling /home/caleb/workspace/prog-langs/prolog/map.pl for byte code...
+/home/caleb/workspace/prog-langs/prolog/map.pl compiled, 24 lines read - 3436 bytes written, 17 ms
+
+(2 ms) yes
+| ?- colorint(A,B,C,D,E,F)(A,B,C,D,E,F).t(A,B,C,D,E,F). g(A,B,C,D,E,F).(A,B,C,D,E,F).
+
+A = red
+B = green
+C = yellow
+D = green
+E = blue
+F = red ? ;
+
+A = red
+B = green
+C = yellow
+D = green
+E = red
+F = blue ? 
+
+(1 ms) yes
+| ?- [fib.pl][fib.pl]
+.
+uncaught exception: error(syntax_error('user_input:9 (char:7) , | ] or operator expected in list'),read_term/3)
+| ?- [fib][fib].
+compiling /home/caleb/workspace/prog-langs/prolog/fib.pl for byte code...
+/home/caleb/workspace/prog-langs/prolog/fib.pl compiled, 16 lines read - 1138 bytes written, 13 ms
+
+(2 ms) yes
+| ?- fib(2, 99)(2, 99).
+
+no
+| ?- fib(3, N)(3, N).
+
+N = 2 ? 
+
+yes
+| ?- 
+
+[1m[7m%[27m[1m[0m                                                                            [0m[27m[24m[J[34m[35m~/workspace/prog-langs/prolog[36m(±master) [00m[36m»[00m [K
+
+Script done on Mon 28 Apr 2014 05:06:00 PM EDT

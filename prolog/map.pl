@@ -1,4 +1,3 @@
-% vim: ft=prolog
 % Caleb Everett                                    The College of New Jersey
 % Programming Languages                                  Assignment 7 Prolog
 
@@ -21,3 +20,5 @@ coloring(A,B,C,D,E,F) :-
   different(C, F), different(F, C),
   different(D, E), different(E, D),
   different(E, F), different(F, E).
+
+% vim: ft=prolog
